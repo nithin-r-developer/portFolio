@@ -65,23 +65,27 @@
         position: relative;
     }
 
-    /* 1. Compact Half-Circle Rotary Navigation (Left-Anchored) */
+    /* 1. Compact Rotary Navigation (Top-Center Position) */
     .clock-nav-column {
-        position: absolute;
-        top: 10px;
+        position: relative;
+        top: 0;
         left: 0;
-        width: auto;
+        width: 100%;
         height: auto;
         min-width: 0;
         max-width: none;
         flex: 0 0 auto;
         border: none;
-        padding: 0;
+        padding: 4px 10px 2px 10px;
         margin: 0;
         background: transparent;
         z-index: 30;
         pointer-events: none;
         overflow: visible;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
     }
 
     .clock-panel-label {
@@ -91,29 +95,31 @@
     .clock-wrapper {
         display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: center;
         justify-content: flex-start;
-        gap: 4px;
+        gap: 2px;
         width: auto;
         max-width: none;
         position: relative;
         pointer-events: none;
+        margin: 0 auto;
     }
 
-    /* Half-Circle Rotary Control: Anchored to left edge, other half off-screen */
+    /* Rotary Control: Compact, Horizontally Centered at Top */
     .nav-clock-housing {
         position: relative;
-        left: 0;
-        transform: translateX(-50%);
-        width: clamp(118px, 32vw, 140px);
-        height: clamp(118px, 32vw, 140px);
+        left: auto;
+        transform: none;
+        margin: 0 auto;
+        width: clamp(64px, 17vw, 72px);
+        height: clamp(64px, 17vw, 72px);
         aspect-ratio: 1 / 1;
         border-radius: 50%;
-        background: radial-gradient(circle at 65% 50%, #071009 0%, #020503 70%, #000000 100%);
-        border: 1.5px solid rgba(0, 255, 102, 0.45);
-        box-shadow: 0 0 18px rgba(0, 255, 102, 0.22),
-                    inset 0 0 14px rgba(0, 255, 102, 0.12),
-                    4px 0 14px rgba(0, 0, 0, 0.9);
+        background: radial-gradient(circle at 50% 50%, #07150b 0%, #030805 50%, #000201 80%, #000000 100%);
+        border: 1.5px solid rgba(0, 255, 102, 0.55);
+        box-shadow: 0 0 10px rgba(0, 255, 102, 0.2),
+                    inset 0 0 8px rgba(0, 255, 102, 0.12),
+                    0 2px 12px rgba(0, 0, 0, 0.95);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -123,10 +129,25 @@
         user-select: none;
         -webkit-user-select: none;
         pointer-events: auto;
+        transition: box-shadow 0.25s ease, border-color 0.25s ease;
     }
 
-    .nav-clock-housing:active {
+    /* Touch bleed area so rotary dragging is effortless to catch on mobile */
+    .nav-clock-housing::after {
+        content: '';
+        position: absolute;
+        inset: -10px;
+        border-radius: 50%;
+        pointer-events: auto;
+    }
+
+    .nav-clock-housing:active,
+    .nav-clock-housing.is-interacting {
         cursor: grabbing;
+        border-color: rgba(0, 255, 102, 0.85);
+        box-shadow: 0 0 16px rgba(0, 255, 102, 0.4),
+                    inset 0 0 12px rgba(0, 255, 102, 0.2),
+                    0 4px 16px rgba(0, 0, 0, 1);
     }
 
     .static-bezel {
@@ -138,16 +159,16 @@
     }
 
     .nav-clock-hub {
-        width: clamp(38px, 10vw, 48px);
-        height: clamp(38px, 10vw, 48px);
+        width: clamp(20px, 5.5vw, 24px);
+        height: clamp(20px, 5.5vw, 24px);
         border-radius: 50%;
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: radial-gradient(circle, #020403 0%, #09130c 80%, #010201 100%);
-        border: 1px solid rgba(0, 255, 102, 0.4);
-        box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
+        background: radial-gradient(circle, #010402 0%, #061208 70%, #000000 100%);
+        border: 1px solid rgba(0, 255, 102, 0.35);
+        box-shadow: 0 0 6px rgba(0, 255, 102, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -155,33 +176,28 @@
         pointer-events: none;
     }
 
-    .hub-tag {
-        display: none;
+    .hub-inner {
+        display: none !important;
     }
 
-    .hub-name {
-        font-size: clamp(7px, 2vw, 8.5px);
-        color: var(--neon-green);
-        letter-spacing: 0.5px;
-        line-height: 1.1;
+    .hub-ring-pulse {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--neon-green);
+        box-shadow: 0 0 6px var(--neon-green), 0 0 10px rgba(0, 255, 102, 0.6);
+        animation: corePulse 2s ease-in-out infinite alternate;
     }
 
-    .hub-coords {
-        font-size: 6px;
-        color: var(--text-dim);
-        margin-top: 1px;
-        display: block;
-    }
-
-    /* 3. Fixed Active Pointer with Dynamic Section Readout */
+    /* 3. Fixed Active Pointer (At 3 o'clock on the Dial) */
     .fixed-3oclock-marker {
         position: absolute;
         top: 50%;
-        right: -6px;
+        right: -3px;
         transform: translateY(-50%);
         display: flex;
         align-items: center;
-        gap: 3px;
+        gap: 1.5px;
         z-index: 25;
         pointer-events: none;
     }
@@ -189,96 +205,103 @@
     .marker-caliper-notch {
         width: 0;
         height: 0;
-        border-top: 4px solid transparent;
-        border-bottom: 4px solid transparent;
-        border-right: 7px solid var(--neon-green);
-        filter: drop-shadow(0 0 5px var(--neon-green));
+        border-top: 3.5px solid transparent;
+        border-bottom: 3.5px solid transparent;
+        border-right: 6px solid var(--neon-green);
+        filter: drop-shadow(0 0 4px var(--neon-green));
     }
 
     .marker-alignment-line {
-        width: 6px;
+        width: 3.5px;
         height: 1.5px;
         background: linear-gradient(to right, var(--neon-green), rgba(0, 255, 102, 0.3));
-        box-shadow: 0 0 4px var(--neon-green);
+        box-shadow: 0 0 3px var(--neon-green);
     }
 
     .marker-led-node {
-        width: 5px;
-        height: 5px;
+        width: 3.5px;
+        height: 3.5px;
         border-radius: 50%;
         background: var(--neon-green);
         box-shadow: 0 0 6px var(--neon-green);
     }
 
     .marker-instrument-tag {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        background: rgba(4, 7, 5, 0.95);
-        border: 1px solid var(--neon-green-border);
-        padding: 2px 6px;
-        border-radius: 3px;
-        box-shadow: 0 0 10px rgba(0, 255, 102, 0.25);
-        white-space: nowrap;
-    }
-
-    .tag-coord {
         display: none !important;
     }
 
-    .active-sec-name-readout {
-        display: inline-block !important;
-        font-family: var(--font-mono);
-        font-weight: 700;
-        font-size: 8.5px;
-        letter-spacing: 1.2px;
-        color: var(--neon-green);
-        text-shadow: 0 0 8px var(--neon-green-glow);
-        transition: opacity 0.15s ease, transform 0.15s ease;
-        white-space: nowrap;
-    }
-
-    .active-sec-name-readout.fade-transition {
-        opacity: 0;
-        transform: translateX(3px);
-    }
-
-    /* Dynamic Readout Below Half-Circle Arc */
-    .mobile-rotary-readout {
+    /* Active Section Label: Placed Below the Top-Centered Rotary Dial */
+    .mobile-rotary-label-panel {
         display: flex;
         align-items: center;
-        gap: 4px;
-        margin-left: 6px;
-        padding: 2px 7px;
-        background: rgba(4, 8, 6, 0.92);
-        border: 1px solid rgba(0, 255, 102, 0.3);
-        border-radius: 3px;
-        box-shadow: 0 0 8px rgba(0, 255, 102, 0.18);
+        justify-content: center;
+        margin: 2px auto 0 auto;
+        padding: 1.5px 8px;
+        background: rgba(3, 7, 4, 0.94);
+        border: 1px solid rgba(0, 255, 102, 0.35);
+        border-bottom: 2px solid var(--neon-green);
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(0, 255, 102, 0.15), 0 2px 6px rgba(0, 0, 0, 0.7);
         pointer-events: none;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
     }
 
-    .rotary-readout-arrow {
+    .rotary-label-track {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        overflow: hidden;
+    }
+
+    .rotary-label-icon {
         color: var(--neon-green);
+        font-size: 5px;
+        line-height: 1;
+        filter: drop-shadow(0 0 3px var(--neon-green));
+    }
+
+    .rotary-label-code {
+        font-family: var(--font-mono);
+        font-size: 7px;
+        font-weight: 600;
+        color: var(--text-dim);
+        letter-spacing: 0.5px;
+    }
+
+    .rotary-label-divider {
+        color: rgba(0, 255, 102, 0.3);
         font-size: 7px;
     }
 
-    .rotary-readout-name {
+    .rotary-label-name {
         font-family: var(--font-mono);
         font-weight: 700;
-        font-size: 8.5px;
-        letter-spacing: 1px;
+        font-size: 8px;
+        letter-spacing: 0.8px;
         color: var(--neon-green);
         text-shadow: 0 0 6px var(--neon-green-glow);
-        transition: opacity 0.15s ease, transform 0.15s ease;
+        transition: opacity 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1);
         white-space: nowrap;
+        display: inline-block;
     }
 
-    .rotary-readout-name.fade-transition {
+    .rotary-label-name.anim-forward {
         opacity: 0;
-        transform: translateY(-2px);
+        transform: translateY(-3px);
     }
 
-    /* 2. Hide Section Names Around Mobile Dial (Only Minimal Dots) */
+    .rotary-label-name.anim-backward {
+        opacity: 0;
+        transform: translateY(3px);
+    }
+
+    /* Backward compatibility for previous mobile-rotary-readout */
+    .mobile-rotary-readout {
+        display: none !important;
+    }
+
+    /* 2. Minimal Node Dots on Mobile Dial */
     .nav-node-label,
     .nav-node-code {
         display: none !important;
@@ -286,8 +309,8 @@
 
     .nav-node-btn {
         padding: 0;
-        min-width: 26px;
-        min-height: 26px;
+        min-width: 18px;
+        min-height: 18px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -296,33 +319,33 @@
     }
 
     .nav-node-marker {
-        width: 7px;
-        height: 7px;
+        width: 5px;
+        height: 5px;
     }
 
     .nav-node-dot {
-        width: 3px;
-        height: 3px;
+        width: 2px;
+        height: 2px;
     }
 
     .nav-node-btn.active .nav-node-marker {
-        width: 9px;
-        height: 9px;
+        width: 7px;
+        height: 7px;
         background: #000000;
         border-color: var(--neon-green);
-        box-shadow: 0 0 10px var(--neon-green), inset 0 0 4px var(--neon-green);
+        box-shadow: 0 0 8px var(--neon-green), inset 0 0 3px var(--neon-green);
     }
 
     .nav-node-btn.active .nav-node-dot {
         background: var(--neon-green);
-        box-shadow: 0 0 6px var(--neon-green);
+        box-shadow: 0 0 5px var(--neon-green);
     }
 
     .clock-nav-controls {
         display: none !important;
     }
 
-    /* 5. Maximize Content Area (Eliminate redundant dead space) */
+    /* 5. Maximize Content Area: Begin higher, fill width & height, small bottom breathing space */
     .content-clock-center-hub {
         display: none !important;
     }
@@ -372,16 +395,17 @@
     }
 
     .content-section-panel.active {
-        display: block; /* Content expands naturally to its true height */
+        display: block; /* Content expands naturally and remains naturally scrollable */
     }
 
+    /* Content Area: Widened, begins immediately below top-center navigation, small bottom space */
     .panel-inner {
         width: 100%;
         height: auto;
         min-height: 100%;
         max-width: 100%;
         margin: 0 auto;
-        padding: 8px 12px 40px clamp(72px, 20vw, 88px);
+        padding: 2px 10px 12px 10px;
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -389,75 +413,349 @@
         box-sizing: border-box;
     }
 
+    /* Section 0: Home Overview */
     .panel-home-layout {
         min-height: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        align-items: stretch;
+        justify-content: flex-start;
     }
 
     .home-identity-frame {
-        grid-template-columns: 1fr;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
         text-align: center;
-        gap: 14px;
+        gap: 10px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 102px);
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--border-graphite);
+        border-radius: 8px;
+        padding: 14px 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(0, 255, 102, 0.03);
+        box-sizing: border-box;
+    }
+
+    .home-avatar-aperture {
+        width: 100px;
+        height: 100px;
+        flex-shrink: 0;
+    }
+
+    .avatar-img-wrap {
+        width: 86px;
+        height: 86px;
+    }
+
+    .avatar-badge {
+        font-size: 7px;
+        padding: 2px 6px;
+        bottom: -6px;
+    }
+
+    .home-text-dossier {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .home-kicker {
+        font-size: 9.5px;
+        letter-spacing: 1.5px;
     }
 
     .home-headline {
         font-size: 26px;
+        letter-spacing: 1.5px;
+        line-height: 1.1;
+    }
+
+    .home-role {
+        font-size: 11px;
     }
 
     .home-credo {
         border-left: none;
-        border-top: 2px solid var(--neon-green);
-        padding-left: 0;
-        padding-top: 6px;
+        border-top: 1.5px solid var(--neon-green);
+        border-bottom: 1.5px solid var(--neon-green-border);
+        padding: 6px 0;
+        font-size: 13px;
+        margin: 2px 0;
+    }
+
+    .home-bio-summary {
+        font-size: 11.5px;
+        line-height: 1.5;
+        color: var(--text-muted);
     }
 
     .home-telemetry-strip {
+        display: grid;
         grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 5px;
         text-align: left;
+        margin-top: 4px;
     }
 
     .home-action-cluster {
+        display: flex;
         justify-content: center;
+        gap: 8px;
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 7px 12px;
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+
+    /* Section 1: About */
+    .panel-about-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 12px;
     }
 
     .about-dossier-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
         max-height: none;
         overflow: visible;
+    }
+
+    .about-narrative-card,
+    .about-matrix-card {
+        padding: 16px 14px;
+        border-radius: 8px;
+        gap: 10px;
+        background: var(--bg-card);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), inset 0 0 14px rgba(0, 255, 102, 0.03);
+    }
+
+    .about-lead-text {
+        font-size: 13.5px;
+    }
+
+    .about-body-text {
+        font-size: 12px;
+        line-height: 1.55;
+    }
+
+    .matrix-fields-list {
+        gap: 9px;
+        font-size: 10.5px;
+    }
+
+    /* Section 2: Skills */
+    .panel-skills-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .skills-filter-bar {
+        padding: 6px 10px;
+        gap: 6px;
+        font-size: 9px;
+    }
+
+    .skill-tab {
+        padding: 4px 8px;
+        font-size: 8.5px;
     }
 
     .skills-orbital-constellation {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        max-height: none;
-        overflow: visible;
-    }
-
-    .contact-terminal-grid {
         grid-template-columns: 1fr;
         max-height: none;
         overflow: visible;
+        gap: 10px;
+        width: 100%;
+        padding-right: 0;
     }
 
-    .certs-grid {
-        grid-template-columns: 1fr;
-        max-height: none;
-        overflow: visible;
+    .skill-node-card {
+        padding: 12px 14px;
+        border-radius: 6px;
     }
 
-    .cert-preview-frame {
-        height: 140px;
+    /* Section 3: Projects */
+    .panel-projects-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .project-orbit-switcher {
+        gap: 8px;
+        width: 100%;
+    }
+
+    .proj-tab-btn {
+        padding: 6px 10px;
+        font-size: 9.5px;
+        gap: 6px;
     }
 
     .project-viewport-stage {
+        flex: 1;
+        width: 100%;
         overflow: visible;
     }
 
     .project-display-card {
+        display: none;
+        padding: 14px 12px;
+        border-radius: 8px;
+        gap: 10px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 156px);
+        box-sizing: border-box;
         overflow: visible;
         height: auto;
+    }
+
+    .project-display-card.active {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .proj-telemetry-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .proj-title {
+        font-size: 18px;
+    }
+
+    .proj-summary {
+        font-size: 11.5px;
+        line-height: 1.5;
+    }
+
+    .proj-simulated-terminal {
+        flex: 1;
+        margin-top: 2px;
+    }
+
+    /* Section 4: Experience */
+    .panel-experience-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .experience-orbital-card {
+        padding: 16px 14px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 102px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-sizing: border-box;
+    }
+
+    /* Section 5: Education */
+    .panel-education-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .edu-orbital-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .edu-card {
+        padding: 14px 12px;
+    }
+
+    /* Section 6: Certifications */
+    .panel-certifications-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .certs-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .cert-orbital-card {
+        padding: 12px;
+    }
+
+    .cert-preview-frame {
+        height: 150px;
+    }
+
+    /* Section 7: Achievements */
+    .panel-achievements-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .achievements-cluster {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .achievement-orbital-milestone {
+        padding: 14px 12px;
+    }
+
+    /* Section 8: Contact */
+    .panel-contact-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .contact-terminal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .contact-comms-card,
+    .contact-form-card {
+        padding: 16px 14px;
     }
 
     /* 6. Compact Status Footer */
@@ -499,28 +797,118 @@
 }
 
 /* ========================================================
-   COMPACT MOBILE SCREENS (375–430px)
+   TABLET & WIDE MOBILE (431–767px)
+   Compact top-centered rotary control, maximized content area
    ======================================================== */
-@media screen and (max-width: 430px) {
+@media screen and (min-width: 431px) and (max-width: 767px) {
     .nav-clock-housing {
-        width: clamp(112px, 30vw, 126px);
-        height: clamp(112px, 30vw, 126px);
+        width: 74px;
+        height: 74px;
     }
 
-    .active-sec-name-readout,
-    .rotary-readout-name {
-        font-size: 8px;
+    .nav-clock-hub {
+        width: 24px;
+        height: 24px;
+    }
+
+    .mobile-rotary-label-panel {
+        padding: 2px 7px;
+    }
+
+    .rotary-label-name {
+        font-size: 8.5px;
         letter-spacing: 1px;
     }
 
     .panel-inner {
-        padding: 6px 10px 36px clamp(68px, 19vw, 80px);
+        padding: 4px 14px 14px 14px;
+    }
+
+    .home-identity-frame {
+        padding: 18px 16px;
+        gap: 12px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 116px);
+    }
+
+    .home-avatar-aperture {
+        width: 114px;
+        height: 114px;
+    }
+
+    .avatar-img-wrap {
+        width: 98px;
+        height: 98px;
+    }
+
+    .home-headline {
+        font-size: 28px;
+    }
+
+    .skills-orbital-constellation {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .certs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ========================================================
+   COMPACT MOBILE SCREENS (375–430px)
+   High-density content viewport, sleek top-centered control
+   ======================================================== */
+@media screen and (min-width: 375px) and (max-width: 430px) {
+    .nav-clock-housing {
+        width: 66px;
+        height: 66px;
+    }
+
+    .nav-clock-hub {
+        width: 22px;
+        height: 22px;
+    }
+
+    .mobile-rotary-label-panel {
+        padding: 1.5px 6px;
+    }
+
+    .rotary-label-name {
+        font-size: 8px;
+        letter-spacing: 0.8px;
+    }
+
+    .panel-inner {
+        padding: 2px 10px 12px 10px;
+    }
+
+    .home-identity-frame {
+        padding: 16px 14px;
+        gap: 10px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 106px);
+    }
+
+    .home-avatar-aperture {
+        width: 104px;
+        height: 104px;
+    }
+
+    .avatar-img-wrap {
+        width: 90px;
+        height: 90px;
+    }
+
+    .home-headline {
+        font-size: 25px;
+    }
+
+    .home-telemetry-strip {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 /* ========================================================
    ULTRA-COMPACT PHONES (320–374px)
-   Ensure zero clipping, seamless fit down to 320px
+   Ultra-compact top-centered rotary dial, maximum content
    ======================================================== */
 @media screen and (max-width: 374px) {
     :root {
@@ -564,70 +952,94 @@
     }
 
     .clock-nav-column {
-        top: 6px;
+        position: relative;
+        top: 0;
         left: 0;
+        padding: 2px 6px 1px 6px;
     }
 
     .nav-clock-housing {
-        width: clamp(100px, 29vw, 110px);
-        height: clamp(100px, 29vw, 110px);
+        width: 58px;
+        height: 58px;
     }
 
     .nav-clock-hub {
-        width: 34px;
-        height: 34px;
+        width: 18px;
+        height: 18px;
     }
 
-    .hub-name {
-        font-size: 7px;
+    .hub-ring-pulse {
+        width: 4px;
+        height: 4px;
     }
 
     .fixed-3oclock-marker {
-        right: -4px;
-        gap: 2px;
+        right: -2px;
+        gap: 1px;
+    }
+
+    .marker-caliper-notch {
+        border-top: 3px solid transparent;
+        border-bottom: 3px solid transparent;
+        border-right: 5px solid var(--neon-green);
     }
 
     .marker-alignment-line {
-        width: 4px;
+        width: 2.5px;
+        height: 1px;
     }
 
-    .marker-instrument-tag {
+    .marker-led-node {
+        width: 3px;
+        height: 3px;
+    }
+
+    .mobile-rotary-label-panel {
+        margin: 1px auto 0 auto;
+        padding: 1px 4px;
+    }
+
+    .rotary-label-code {
         font-size: 6.5px;
-        padding: 2px 4px;
     }
 
-    .active-sec-name-readout,
-    .rotary-readout-name {
-        font-size: 7.5px;
-        letter-spacing: 0.8px;
+    .rotary-label-name {
+        font-size: 7px;
+        letter-spacing: 0.5px;
     }
 
     .panel-inner {
-        padding: 4px 8px 32px clamp(60px, 18vw, 70px);
+        padding: 2px 6px 10px 6px;
+    }
+
+    .home-identity-frame {
+        padding: 12px 10px;
+        gap: 8px;
+        min-height: calc(100dvh - var(--hud-height) - var(--footer-height) - 96px);
     }
 
     .home-avatar-aperture {
-        width: 96px;
-        height: 96px;
+        width: 88px;
+        height: 88px;
     }
 
     .avatar-img-wrap {
-        width: 82px;
-        height: 82px;
+        width: 76px;
+        height: 76px;
     }
 
     .avatar-badge {
-        font-size: 6.5px;
-        padding: 1px 5px;
+        font-size: 6px;
+        padding: 1px 4px;
     }
 
     .home-headline {
-        font-size: 20px;
+        font-size: 21px;
         word-break: break-word;
     }
 
     .home-role {
-        font-size: 9.5px;
+        font-size: 9px;
     }
 
     .home-credo {
@@ -635,16 +1047,25 @@
     }
 
     .home-bio-summary {
-        font-size: 10.5px;
+        font-size: 10px;
+    }
+
+    .home-telemetry-strip {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .t-label {
+        font-size: 7.5px;
+    }
+
+    .t-val {
+        font-size: 9.5px;
     }
 
     .action-btn {
         padding: 5px 8px;
         font-size: 8.5px;
-    }
-
-    .panel-inner {
-        padding: 4px 6px 36px 6px;
     }
 
     .skills-orbital-constellation {
@@ -653,21 +1074,21 @@
 
     .achievement-orbital-milestone {
         flex-direction: column;
-        padding: 12px 8px;
+        padding: 10px 8px;
         text-align: center;
     }
 
     .milestone-icon-hub {
-        width: 42px;
-        height: 42px;
+        width: 36px;
+        height: 36px;
     }
 
     .milestone-headline {
-        font-size: 15px;
+        font-size: 14px;
     }
 
     .contact-statement {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .cursor-tracker {
@@ -705,6 +1126,8 @@
     }
 
     .nav-clock-housing {
+        left: auto;
+        transform: none;
         width: clamp(100px, 18vw, 140px);
         height: clamp(100px, 18vw, 140px);
         aspect-ratio: 1 / 1;

@@ -101,11 +101,22 @@
     }
 
     // Dynamic active section name readout at fixed 3 o'clock pointer and below half-circle arc
-    function updateActivePointerLabel(title) {
+    let mobileRotaryNameEl = null;
+    let mobileRotaryCodeEl = null;
+
+    function updateActivePointerLabel(sectionOrTitle, isForward = true) {
         if (!activePointerLabelEl) {
             activePointerLabelEl = document.getElementById('active-pointer-label');
         }
-        const mobileReadoutEl = document.getElementById('mobile-rotary-name');
+        if (!mobileRotaryNameEl) {
+            mobileRotaryNameEl = document.getElementById('mobile-rotary-name');
+        }
+        if (!mobileRotaryCodeEl) {
+            mobileRotaryCodeEl = document.getElementById('mobile-rotary-code');
+        }
+
+        const title = typeof sectionOrTitle === 'string' ? sectionOrTitle : (sectionOrTitle && sectionOrTitle.title ? sectionOrTitle.title : 'HOME');
+        const code = typeof sectionOrTitle === 'object' && sectionOrTitle && sectionOrTitle.code ? sectionOrTitle.code : null;
 
         if (activePointerLabelEl && activePointerLabelEl.textContent !== title) {
             activePointerLabelEl.classList.add('fade-transition');
@@ -115,12 +126,16 @@
             }, 80);
         }
 
-        if (mobileReadoutEl && mobileReadoutEl.textContent !== title) {
-            mobileReadoutEl.classList.add('fade-transition');
+        if (mobileRotaryNameEl && mobileRotaryNameEl.textContent !== title) {
+            const animClass = isForward ? 'anim-forward' : 'anim-backward';
+            mobileRotaryNameEl.classList.add(animClass);
             setTimeout(() => {
-                mobileReadoutEl.textContent = title;
-                mobileReadoutEl.classList.remove('fade-transition');
-            }, 80);
+                mobileRotaryNameEl.textContent = title;
+                if (mobileRotaryCodeEl && code) {
+                    mobileRotaryCodeEl.textContent = code;
+                }
+                mobileRotaryNameEl.classList.remove(animClass);
+            }, 90);
         }
     }
 
@@ -133,7 +148,7 @@
         // The SVG orbital circle is r=114 on a 340x340 viewBox (114/340 = 0.3353)
         const housingWidth = navClockHousingEl && navClockHousingEl.clientWidth > 0
             ? navClockHousingEl.clientWidth
-            : (window.innerWidth <= 992 ? 120 : 320);
+            : (window.innerWidth <= 992 ? 72 : 320);
         const radius = Math.round(housingWidth * (114 / 340));
 
         SECTIONS.forEach((section, idx) => {
@@ -163,6 +178,7 @@
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (performance.now() - lastRotaryDragTimestamp < 200) return;
                 goToSection(idx, false);
             });
 
@@ -199,15 +215,15 @@
     }
 
     // Primary synchronized navigation function
-    function goToSection(targetIndex, startAtBottom = false) {
+    function goToSection(targetIndex, startAtBottom = false, explicitAngle = null) {
         if (targetIndex < 0 || targetIndex >= TOTAL_SECTIONS) return;
 
-        // If target is already active and no transition is running
-        if (targetIndex === activeIndex && !isTransitioning) return;
+        // If target is already active and no transition is running and not explicit snap
+        if (targetIndex === activeIndex && !isTransitioning && explicitAngle === null) return;
 
         // Rapid swipes queueing: queue max ONE additional section change
         if (isTransitioning) {
-            queuedTarget = { index: targetIndex, startAtBottom: startAtBottom };
+            queuedTarget = { index: targetIndex, startAtBottom: startAtBottom, explicitAngle: explicitAngle };
             return;
         }
 
@@ -216,8 +232,12 @@
         const diff = calculateShortestLogicalDelta(prevIndex, targetIndex);
         const isForward = diff >= 0;
 
-        // Update cumulative clock angle by shortest logical rotation
-        currentClockAngle += diff * ANGLE_PER_SECTION;
+        // Update cumulative clock angle by shortest logical rotation or explicit snap angle
+        if (explicitAngle !== null) {
+            currentClockAngle = explicitAngle;
+        } else {
+            currentClockAngle += diff * ANGLE_PER_SECTION;
+        }
 
         // SHARED STATE: activeSection controls both systems
         activeIndex = targetIndex;
@@ -230,7 +250,8 @@
         }
 
         const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const transitionStyle = prefersReducedMotion ? 'none' : 'transform 850ms cubic-bezier(0.22, 1.0, 0.36, 1.0)';
+        const duration = explicitAngle !== null ? '400ms' : '850ms';
+        const transitionStyle = prefersReducedMotion ? 'none' : `transform ${duration} cubic-bezier(0.22, 1.0, 0.36, 1.0)`;
 
         // Left clock rotation
         if (navRotorEl) {
@@ -247,7 +268,7 @@
 
         // Telemetry & Dynamic Pointer Readout
         const currentSec = SECTIONS[activeIndex];
-        updateActivePointerLabel(currentSec.title);
+        updateActivePointerLabel(currentSec, isForward);
 
         if (navAngleDisplayEl) {
             const normalizedAngle = ((currentClockAngle % 360) + 360) % 360;
@@ -319,7 +340,7 @@
         if (queuedTarget !== null) {
             const next = queuedTarget;
             queuedTarget = null;
-            goToSection(next.index, next.startAtBottom);
+            goToSection(next.index, next.startAtBottom, next.explicitAngle || null);
         }
     }
 
@@ -443,6 +464,8 @@
     let accumulatedRotaryAngle = 0;
     let rotaryHasMoved = false;
     let activeRotaryPointerId = null;
+    let lastRotaryDragTimestamp = 0;
+    let lastHoveredIndex = 0;
 
     function handleRotaryPointerDown(e) {
         if (isTransitioning) return;
@@ -451,7 +474,7 @@
         const housing = document.getElementById('nav-clock-housing');
         if (!housing) return;
 
-        // Pointer capture tracks rotation even if finger strays slightly outside the arc
+        // Pointer capture tracks rotation smoothly even if finger strays slightly outside the arc
         try {
             housing.setPointerCapture(e.pointerId);
             activeRotaryPointerId = e.pointerId;
@@ -459,16 +482,26 @@
             activeRotaryPointerId = null;
         }
 
+        const isMobile = window.innerWidth <= 992;
         const rect = housing.getBoundingClientRect();
-        // The imaginary circle center in client coordinates
-        rotaryCenterX = rect.left + rect.width / 2;
-        rotaryCenterY = rect.top + rect.height / 2;
 
-        lastPointerAngle = Math.atan2(e.clientY - rotaryCenterY, e.clientX - rotaryCenterX) * (180 / Math.PI);
+        // Calculate imaginary circle center in client coordinates
+        // On mobile, the housing is anchored to the left edge with translateX(-50%)
+        rotaryCenterX = isMobile ? (rect.right - (housing.offsetWidth / 2)) : (rect.left + rect.width / 2);
+        rotaryCenterY = rect.top + (housing.offsetHeight / 2);
+
+        // Movement angle calculated relative to the center of the imaginary circle
+        const deltaX = isMobile ? Math.max(e.clientX - rotaryCenterX, 2) : (e.clientX - rotaryCenterX);
+        const deltaY = e.clientY - rotaryCenterY;
+
+        lastPointerAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
         rotaryDragStartAngle = lastPointerAngle;
         accumulatedRotaryAngle = currentClockAngle;
         rotaryHasMoved = false;
         isDraggingRotary = true;
+        lastHoveredIndex = activeIndex;
+
+        housing.classList.add('is-interacting');
 
         if (navRotorEl) navRotorEl.style.transition = 'none';
         if (contentRotorEl) contentRotorEl.style.transition = 'none';
@@ -478,15 +511,18 @@
         if (!isDraggingRotary) return;
         if (activeRotaryPointerId !== null && e.pointerId !== activeRotaryPointerId) return;
 
-        const currentAngle = Math.atan2(e.clientY - rotaryCenterY, e.clientX - rotaryCenterX) * (180 / Math.PI);
+        const deltaX = e.clientX - rotaryCenterX;
+        const deltaY = e.clientY - rotaryCenterY;
+
+        const currentAngle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
         let stepDelta = currentAngle - lastPointerAngle;
 
-        // Seam crossing normalization (-180° to +180°)
+        // Full-circle seam crossing normalization (-180° to +180°)
         if (stepDelta > 180) stepDelta -= 360;
         if (stepDelta < -180) stepDelta += 360;
 
         // Check if movement exceeds threshold to distinguish from a simple tap
-        if (Math.abs(currentAngle - rotaryDragStartAngle) > 2.5 || Math.abs(stepDelta) > 1.2) {
+        if (!rotaryHasMoved && (Math.abs(currentAngle - rotaryDragStartAngle) > 2.0 || Math.abs(stepDelta) > 0.8)) {
             rotaryHasMoved = true;
         }
 
@@ -505,25 +541,35 @@
         }
 
         // Determine nearest section aligned with 3 o'clock pointer
+        // anglePerSection = 360 / totalSections
         const rawSection = Math.round(accumulatedRotaryAngle / ANGLE_PER_SECTION);
         const nearestIndex = ((rawSection % TOTAL_SECTIONS) + TOTAL_SECTIONS) % TOTAL_SECTIONS;
 
-        // Immediately update dynamic section readout at pointer & below arc
-        updateActivePointerLabel(SECTIONS[nearestIndex].title);
+        if (nearestIndex !== lastHoveredIndex) {
+            const isForward = stepDelta >= 0;
+            lastHoveredIndex = nearestIndex;
 
-        // Preview active node marker
-        const nodeBtns = document.querySelectorAll('.nav-node-btn');
-        nodeBtns.forEach((btn, idx) => {
-            btn.classList.toggle('active', idx === nearestIndex);
-        });
+            // Immediately update dynamic section readout below arc and at pointer
+            updateActivePointerLabel(SECTIONS[nearestIndex], isForward);
 
-        const jumpTicks = document.querySelectorAll('.jump-tick');
-        jumpTicks.forEach((tick, idx) => {
-            tick.classList.toggle('active', idx === nearestIndex);
-        });
+            // Preview active node marker
+            const nodeBtns = document.querySelectorAll('.nav-node-btn');
+            nodeBtns.forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === nearestIndex);
+            });
 
-        if (hudSecCodeEl) hudSecCodeEl.textContent = SECTIONS[nearestIndex].code;
-        if (hudSecNameEl) hudSecNameEl.textContent = SECTIONS[nearestIndex].title;
+            const jumpTicks = document.querySelectorAll('.jump-tick');
+            jumpTicks.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === nearestIndex);
+            });
+
+            if (window.AudioEngine && window.AudioEngine.playTick) {
+                window.AudioEngine.playTick(1200);
+            }
+
+            if (hudSecCodeEl) hudSecCodeEl.textContent = SECTIONS[nearestIndex].code;
+            if (hudSecNameEl) hudSecNameEl.textContent = SECTIONS[nearestIndex].title;
+        }
     }
 
     function handleRotaryPointerUp(e) {
@@ -536,48 +582,62 @@
                 housing.releasePointerCapture(activeRotaryPointerId);
             } catch (err) {}
         }
+        if (housing) {
+            housing.classList.remove('is-interacting');
+        }
         activeRotaryPointerId = null;
         isDraggingRotary = false;
+        lastRotaryDragTimestamp = performance.now();
 
         if (!rotaryHasMoved) {
-            // Tap/click without drag: restore current angle
+            // Tap/click without drag: restore current angle smoothly
             if (navRotorEl) {
-                navRotorEl.style.transition = 'transform 850ms cubic-bezier(0.22, 1, 0.36, 1)';
+                navRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
                 navRotorEl.style.transform = `rotate(${currentClockAngle}deg)`;
+                updateNodeOrientations(currentClockAngle);
             }
             if (contentRotorEl) {
-                contentRotorEl.style.transition = 'transform 850ms cubic-bezier(0.22, 1, 0.36, 1)';
+                contentRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
                 contentRotorEl.style.transform = `rotate(${-currentClockAngle}deg)`;
             }
             return;
         }
 
         // Section snapping: calculate nearest 40° interval
+        // anglePerSection = 360 / totalSections
         const rawSection = Math.round(accumulatedRotaryAngle / ANGLE_PER_SECTION);
         const targetIndex = ((rawSection % TOTAL_SECTIONS) + TOTAL_SECTIONS) % TOTAL_SECTIONS;
         const snapAngle = rawSection * ANGLE_PER_SECTION;
 
-        currentClockAngle = snapAngle;
-
-        // Smooth snap animation (360ms)
-        if (navRotorEl) {
-            navRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
-            navRotorEl.style.transform = `rotate(${snapAngle}deg)`;
-            updateNodeOrientations(snapAngle);
-        }
-        if (contentRotorEl) {
-            contentRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
-            contentRotorEl.style.transform = `rotate(${-snapAngle}deg)`;
-        }
-
-        // Trigger short audio beep
-        playAudioFeedback('section');
-
-        // Synchronize portfolio content and active state
+        // Smoothly snap to the nearest section, synchronize portfolio content, and trigger beep
+        // Never leave the half-circle positioned between sections!
         if (targetIndex !== activeIndex) {
-            goToSection(targetIndex, false);
+            goToSection(targetIndex, false, snapAngle);
         } else {
-            updateActivePointerLabel(SECTIONS[activeIndex].title);
+            // Snapped back to same section: animate dial to exact snapAngle
+            currentClockAngle = snapAngle;
+            if (navRotorEl) {
+                navRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
+                navRotorEl.style.transform = `rotate(${snapAngle}deg)`;
+                updateNodeOrientations(snapAngle);
+            }
+            if (contentRotorEl) {
+                contentRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
+                contentRotorEl.style.transform = `rotate(${-snapAngle}deg)`;
+            }
+            if (window.AudioEngine && window.AudioEngine.playSystemBeep) {
+                window.AudioEngine.playSystemBeep(true);
+            }
+            updateActivePointerLabel(SECTIONS[activeIndex], true);
+
+            const nodeBtns = document.querySelectorAll('.nav-node-btn');
+            nodeBtns.forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === activeIndex);
+            });
+            const jumpTicks = document.querySelectorAll('.jump-tick');
+            jumpTicks.forEach((tick, idx) => {
+                tick.classList.toggle('active', idx === activeIndex);
+            });
         }
     }
 
@@ -669,6 +729,8 @@
         hudSecCodeEl = document.getElementById('hud-sec-code');
         hudSecNameEl = document.getElementById('hud-sec-name');
         activePointerLabelEl = document.getElementById('active-pointer-label');
+        mobileRotaryNameEl = document.getElementById('mobile-rotary-name');
+        mobileRotaryCodeEl = document.getElementById('mobile-rotary-code');
 
         contentPanels = Array.from(document.querySelectorAll('.content-section-panel'));
 

@@ -773,6 +773,7 @@ button {
     display: none;
 }
 
+.mobile-rotary-label-panel,
 .mobile-rotary-readout {
     display: none;
 }
