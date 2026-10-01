@@ -38,6 +38,7 @@
     let centerSecSubtitleEl;
     let hudSecCodeEl;
     let hudSecNameEl;
+    let activePointerLabelEl;
     let contentPanels = [];
     let activeAnimFrameId = null;
 
@@ -99,6 +100,30 @@
         return diff;
     }
 
+    // Dynamic active section name readout at fixed 3 o'clock pointer and below half-circle arc
+    function updateActivePointerLabel(title) {
+        if (!activePointerLabelEl) {
+            activePointerLabelEl = document.getElementById('active-pointer-label');
+        }
+        const mobileReadoutEl = document.getElementById('mobile-rotary-name');
+
+        if (activePointerLabelEl && activePointerLabelEl.textContent !== title) {
+            activePointerLabelEl.classList.add('fade-transition');
+            setTimeout(() => {
+                activePointerLabelEl.textContent = title;
+                activePointerLabelEl.classList.remove('fade-transition');
+            }, 80);
+        }
+
+        if (mobileReadoutEl && mobileReadoutEl.textContent !== title) {
+            mobileReadoutEl.classList.add('fade-transition');
+            setTimeout(() => {
+                mobileReadoutEl.textContent = title;
+                mobileReadoutEl.classList.remove('fade-transition');
+            }, 80);
+        }
+    }
+
     // Build interactive node markers on the clock dial
     function buildNavClockNodes() {
         if (!navNodesLayerEl) return;
@@ -108,7 +133,7 @@
         // The SVG orbital circle is r=114 on a 340x340 viewBox (114/340 = 0.3353)
         const housingWidth = navClockHousingEl && navClockHousingEl.clientWidth > 0
             ? navClockHousingEl.clientWidth
-            : (window.innerWidth <= 992 ? 220 : 320);
+            : (window.innerWidth <= 992 ? 120 : 320);
         const radius = Math.round(housingWidth * (114 / 340));
 
         SECTIONS.forEach((section, idx) => {
@@ -220,8 +245,10 @@
             contentRotorEl.style.transform = `rotate(${-currentClockAngle}deg)`;
         }
 
-        // Telemetry & HUD updates
+        // Telemetry & Dynamic Pointer Readout
         const currentSec = SECTIONS[activeIndex];
+        updateActivePointerLabel(currentSec.title);
+
         if (navAngleDisplayEl) {
             const normalizedAngle = ((currentClockAngle % 360) + 360) % 360;
             navAngleDisplayEl.innerHTML = `${normalizedAngle.toFixed(1)}&deg;`;
@@ -404,6 +431,156 @@
         goToSection(target, true);
     }
 
+    // ========================================================
+    // DIRECT ROTARY INTERACTION (POINTER EVENTS)
+    // Desktop: Full clock mouse drag. Mobile: Half-circle touch drag.
+    // ========================================================
+    let isDraggingRotary = false;
+    let rotaryCenterX = 0;
+    let rotaryCenterY = 0;
+    let lastPointerAngle = 0;
+    let rotaryDragStartAngle = 0;
+    let accumulatedRotaryAngle = 0;
+    let rotaryHasMoved = false;
+    let activeRotaryPointerId = null;
+
+    function handleRotaryPointerDown(e) {
+        if (isTransitioning) return;
+        if (e.button !== undefined && e.button !== 0) return; // Only primary button / touch
+
+        const housing = document.getElementById('nav-clock-housing');
+        if (!housing) return;
+
+        // Pointer capture tracks rotation even if finger strays slightly outside the arc
+        try {
+            housing.setPointerCapture(e.pointerId);
+            activeRotaryPointerId = e.pointerId;
+        } catch (err) {
+            activeRotaryPointerId = null;
+        }
+
+        const rect = housing.getBoundingClientRect();
+        // The imaginary circle center in client coordinates
+        rotaryCenterX = rect.left + rect.width / 2;
+        rotaryCenterY = rect.top + rect.height / 2;
+
+        lastPointerAngle = Math.atan2(e.clientY - rotaryCenterY, e.clientX - rotaryCenterX) * (180 / Math.PI);
+        rotaryDragStartAngle = lastPointerAngle;
+        accumulatedRotaryAngle = currentClockAngle;
+        rotaryHasMoved = false;
+        isDraggingRotary = true;
+
+        if (navRotorEl) navRotorEl.style.transition = 'none';
+        if (contentRotorEl) contentRotorEl.style.transition = 'none';
+    }
+
+    function handleRotaryPointerMove(e) {
+        if (!isDraggingRotary) return;
+        if (activeRotaryPointerId !== null && e.pointerId !== activeRotaryPointerId) return;
+
+        const currentAngle = Math.atan2(e.clientY - rotaryCenterY, e.clientX - rotaryCenterX) * (180 / Math.PI);
+        let stepDelta = currentAngle - lastPointerAngle;
+
+        // Seam crossing normalization (-180° to +180°)
+        if (stepDelta > 180) stepDelta -= 360;
+        if (stepDelta < -180) stepDelta += 360;
+
+        // Check if movement exceeds threshold to distinguish from a simple tap
+        if (Math.abs(currentAngle - rotaryDragStartAngle) > 2.5 || Math.abs(stepDelta) > 1.2) {
+            rotaryHasMoved = true;
+        }
+
+        if (!rotaryHasMoved) return;
+
+        accumulatedRotaryAngle += stepDelta;
+        lastPointerAngle = currentAngle;
+
+        // Rotate dial in real time
+        if (navRotorEl) {
+            navRotorEl.style.transform = `rotate(${accumulatedRotaryAngle}deg)`;
+            updateNodeOrientations(accumulatedRotaryAngle);
+        }
+        if (contentRotorEl) {
+            contentRotorEl.style.transform = `rotate(${-accumulatedRotaryAngle}deg)`;
+        }
+
+        // Determine nearest section aligned with 3 o'clock pointer
+        const rawSection = Math.round(accumulatedRotaryAngle / ANGLE_PER_SECTION);
+        const nearestIndex = ((rawSection % TOTAL_SECTIONS) + TOTAL_SECTIONS) % TOTAL_SECTIONS;
+
+        // Immediately update dynamic section readout at pointer & below arc
+        updateActivePointerLabel(SECTIONS[nearestIndex].title);
+
+        // Preview active node marker
+        const nodeBtns = document.querySelectorAll('.nav-node-btn');
+        nodeBtns.forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === nearestIndex);
+        });
+
+        const jumpTicks = document.querySelectorAll('.jump-tick');
+        jumpTicks.forEach((tick, idx) => {
+            tick.classList.toggle('active', idx === nearestIndex);
+        });
+
+        if (hudSecCodeEl) hudSecCodeEl.textContent = SECTIONS[nearestIndex].code;
+        if (hudSecNameEl) hudSecNameEl.textContent = SECTIONS[nearestIndex].title;
+    }
+
+    function handleRotaryPointerUp(e) {
+        if (!isDraggingRotary) return;
+        if (activeRotaryPointerId !== null && e.pointerId !== activeRotaryPointerId) return;
+
+        const housing = document.getElementById('nav-clock-housing');
+        if (housing && activeRotaryPointerId !== null) {
+            try {
+                housing.releasePointerCapture(activeRotaryPointerId);
+            } catch (err) {}
+        }
+        activeRotaryPointerId = null;
+        isDraggingRotary = false;
+
+        if (!rotaryHasMoved) {
+            // Tap/click without drag: restore current angle
+            if (navRotorEl) {
+                navRotorEl.style.transition = 'transform 850ms cubic-bezier(0.22, 1, 0.36, 1)';
+                navRotorEl.style.transform = `rotate(${currentClockAngle}deg)`;
+            }
+            if (contentRotorEl) {
+                contentRotorEl.style.transition = 'transform 850ms cubic-bezier(0.22, 1, 0.36, 1)';
+                contentRotorEl.style.transform = `rotate(${-currentClockAngle}deg)`;
+            }
+            return;
+        }
+
+        // Section snapping: calculate nearest 40° interval
+        const rawSection = Math.round(accumulatedRotaryAngle / ANGLE_PER_SECTION);
+        const targetIndex = ((rawSection % TOTAL_SECTIONS) + TOTAL_SECTIONS) % TOTAL_SECTIONS;
+        const snapAngle = rawSection * ANGLE_PER_SECTION;
+
+        currentClockAngle = snapAngle;
+
+        // Smooth snap animation (360ms)
+        if (navRotorEl) {
+            navRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
+            navRotorEl.style.transform = `rotate(${snapAngle}deg)`;
+            updateNodeOrientations(snapAngle);
+        }
+        if (contentRotorEl) {
+            contentRotorEl.style.transition = 'transform 360ms cubic-bezier(0.22, 1, 0.36, 1)';
+            contentRotorEl.style.transform = `rotate(${-snapAngle}deg)`;
+        }
+
+        // Trigger short audio beep
+        playAudioFeedback('section');
+
+        // Synchronize portfolio content and active state
+        if (targetIndex !== activeIndex) {
+            goToSection(targetIndex, false);
+        } else {
+            updateActivePointerLabel(SECTIONS[activeIndex].title);
+        }
+    }
+
     // Mouse wheel navigation on Desktop / Laptop
     let accumulatedWheelDelta = 0;
     let wheelDebounceTimer = null;
@@ -422,11 +599,9 @@
         if (e.deltaY > 0) {
             // Scrolling downward through content
             if (!isAtBottom) {
-                // Allow native content scroll down
                 accumulatedWheelDelta = 0;
                 return;
             }
-            // Already at bottom: accumulate wheel delta to trigger NEXT SECTION
             e.preventDefault();
             accumulatedWheelDelta += e.deltaY;
             clearTimeout(wheelDebounceTimer);
@@ -439,11 +614,9 @@
         } else if (e.deltaY < 0) {
             // Scrolling upward through content
             if (!isAtTop) {
-                // Allow native content scroll up
                 accumulatedWheelDelta = 0;
                 return;
             }
-            // Already at top: accumulate wheel delta to trigger PREVIOUS SECTION
             e.preventDefault();
             accumulatedWheelDelta += e.deltaY;
             clearTimeout(wheelDebounceTimer);
@@ -451,152 +624,6 @@
 
             if (accumulatedWheelDelta <= -70) {
                 accumulatedWheelDelta = 0;
-                prevSection();
-            }
-        }
-    }
-
-    // ========================================================
-    // MOBILE SECTION SCROLL LOCK - TOUCH GESTURE HANDLING
-    // ========================================================
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-    let touchIgnored = false;
-    let touchIsClock = false;
-    let touchStartIsAtBottom = false;
-    let touchStartIsAtTop = false;
-    let touchStartIsScrollable = false;
-    let activePanelAtTouchStart = null;
-
-    function handleTouchStart(e) {
-        if (e.touches.length !== 1) return;
-
-        touchIgnored = false;
-        const target = e.target;
-
-        // 1. Gesture conflict prevention: form inputs and text selection
-        if (target.closest('input, textarea, select, [contenteditable="true"]')) {
-            touchIgnored = true;
-            return;
-        }
-
-        // 2. Active lightbox or modal dialog
-        const lightbox = document.getElementById('cert-lightbox');
-        if (lightbox && lightbox.classList.contains('active')) {
-            touchIgnored = true;
-            return;
-        }
-
-        // 3. Selecting text
-        if (window.getSelection && window.getSelection().toString().trim().length > 0) {
-            touchIgnored = true;
-            return;
-        }
-
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = performance.now();
-
-        // Check if touch is on the navigation clock or inside section content
-        touchIsClock = !!target.closest('.clock-nav-column');
-
-        if (!touchIsClock) {
-            const activePanel = document.querySelector('.content-section-panel.active');
-            activePanelAtTouchStart = activePanel;
-
-            if (activePanel) {
-                const st = activePanel.scrollTop;
-                const ch = activePanel.clientHeight;
-                const sh = activePanel.scrollHeight;
-
-                touchStartIsScrollable = (sh > ch + EDGE_THRESHOLD);
-                // Did gesture begin while ALREADY at the bottom boundary?
-                touchStartIsAtBottom = touchStartIsScrollable
-                    ? (st + ch >= sh - EDGE_THRESHOLD)
-                    : true;
-                // Did gesture begin while ALREADY at the top boundary?
-                touchStartIsAtTop = touchStartIsScrollable
-                    ? (st <= EDGE_THRESHOLD)
-                    : true;
-            } else {
-                touchStartIsScrollable = false;
-                touchStartIsAtBottom = true;
-                touchStartIsAtTop = true;
-            }
-        } else {
-            activePanelAtTouchStart = null;
-            touchStartIsScrollable = false;
-            touchStartIsAtBottom = true;
-            touchStartIsAtTop = true;
-        }
-    }
-
-    function handleTouchEnd(e) {
-        if (touchIgnored || isTransitioning || e.changedTouches.length === 0) return;
-
-        if (window.getSelection && window.getSelection().toString().trim().length > 0) {
-            return;
-        }
-
-        const touchEndY = e.changedTouches[0].clientY;
-        const touchEndX = e.changedTouches[0].clientX;
-        const deltaY = touchStartY - touchEndY; // Positive = SWIPE UP, Negative = SWIPE DOWN
-        const deltaX = touchStartX - touchEndX;
-        const absDeltaY = Math.abs(deltaY);
-        const absDeltaX = Math.abs(deltaX);
-
-        // Check if gesture is an intentional vertical swipe (at least 50px, predominantly vertical)
-        if (absDeltaY < SWIPE_THRESHOLD || absDeltaY <= absDeltaX * 1.25) {
-            return;
-        }
-
-        // Swiping directly on the navigation clock always triggers section navigation
-        if (touchIsClock) {
-            if (deltaY > 0) {
-                nextSection();
-            } else {
-                prevSection();
-            }
-            return;
-        }
-
-        // Swiping on content: apply MOBILE SECTION SCROLL LOCK rules
-        const activePanel = activePanelAtTouchStart || document.querySelector('.content-section-panel.active');
-        if (!activePanel) return;
-
-        const currentScrollTop = activePanel.scrollTop;
-        const currentClientHeight = activePanel.clientHeight;
-        const currentScrollHeight = activePanel.scrollHeight;
-        const isCurrentlyScrollable = (currentScrollHeight > currentClientHeight + EDGE_THRESHOLD);
-        const isCurrentlyAtBottom = isCurrentlyScrollable
-            ? (currentScrollTop + currentClientHeight >= currentScrollHeight - EDGE_THRESHOLD)
-            : true;
-        const isCurrentlyAtTop = isCurrentlyScrollable
-            ? (currentScrollTop <= EDGE_THRESHOLD)
-            : true;
-
-        if (deltaY > 0) {
-            // USER SWIPED UP (Attempting to scroll content down or advance to NEXT section)
-            // Rule: Scrolling inside a section never changes the section.
-            // If gesture started before reaching the bottom, allow normal scrolling and do NOT change section!
-            if (!touchStartIsAtBottom) {
-                return;
-            }
-
-            // Only after reaching the bottom boundary, an additional intentional upward swipe advances
-            if (isCurrentlyAtBottom) {
-                nextSection();
-            }
-        } else {
-            // USER SWIPED DOWN (Attempting to scroll content up or return to PREVIOUS section)
-            // Rule: If gesture started before reaching the top, allow normal scrolling and do NOT change section!
-            if (!touchStartIsAtTop) {
-                return;
-            }
-
-            // Only after reaching the top boundary, an additional intentional downward swipe returns
-            if (isCurrentlyAtTop) {
                 prevSection();
             }
         }
@@ -641,17 +668,26 @@
         centerSecSubtitleEl = document.getElementById('center-sec-subtitle');
         hudSecCodeEl = document.getElementById('hud-sec-code');
         hudSecNameEl = document.getElementById('hud-sec-name');
+        activePointerLabelEl = document.getElementById('active-pointer-label');
 
         contentPanels = Array.from(document.querySelectorAll('.content-section-panel'));
 
         buildNavClockNodes();
         buildJumpDots();
 
-        // Update indicator text for touch devices
-        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        // Rotary interaction using Pointer Events (Desktop mouse drag & Mobile half-circle touch drag)
+        if (navClockHousingEl) {
+            navClockHousingEl.addEventListener('pointerdown', handleRotaryPointerDown);
+        }
+        window.addEventListener('pointermove', handleRotaryPointerMove);
+        window.addEventListener('pointerup', handleRotaryPointerUp);
+        window.addEventListener('pointercancel', handleRotaryPointerUp);
+
+        // Update guidance indicator
         const guidanceTextEl = document.querySelector('.guidance-text');
-        if (guidanceTextEl && isTouchDevice) {
-            guidanceTextEl.textContent = 'SWIPE TO ROTATE';
+        if (guidanceTextEl) {
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            guidanceTextEl.textContent = isTouchDevice ? 'ROTATE DIAL' : 'SCROLL TO ROTATE';
         }
 
         // In-page jump buttons
@@ -665,10 +701,8 @@
             });
         });
 
-        // Use passive touch listeners so native momentum scroll is 100% smooth and non-blocking
+        // Desktop mouse wheel navigation and keyboard controls
         window.addEventListener('wheel', handleWheel, { passive: false });
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
-        window.addEventListener('touchend', handleTouchEnd, { passive: true });
         window.addEventListener('keydown', handleKeyDown);
 
         let resizeTimer;

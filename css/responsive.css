@@ -43,13 +43,18 @@
 }
 
 /* ========================================================
-   MOBILE & TABLET PORTRAIT NAVIGATION (<= 992px)
-   Section 1: Mobile Navigation Structure
-   Compact navigation clock at the top, content window below.
+   MOBILE & TABLET NAVIGATION (<= 992px)
+   Compact floating rotary control, dynamic readout at pointer,
+   maximized content viewport, compact status footer.
    ======================================================== */
 @media screen and (max-width: 992px) {
     html, body {
         overflow: hidden;
+    }
+
+    :root {
+        --hud-height: 46px;
+        --footer-height: 30px;
     }
 
     .dual-clock-container {
@@ -60,22 +65,22 @@
         position: relative;
     }
 
-    /* Section 1: Navigation clock column at top of viewport */
+    /* 1. Compact Half-Circle Rotary Navigation (Left-Anchored) */
     .clock-nav-column {
-        flex: 0 0 auto;
-        max-width: 100%;
-        min-width: 100%;
-        width: 100%;
+        position: absolute;
+        top: 10px;
+        left: 0;
+        width: auto;
         height: auto;
-        border-right: none;
-        border-bottom: 1px solid var(--border-graphite);
-        padding: 8px 16px 6px 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at 50% 50%, rgba(14, 20, 16, 0.75) 0%, rgba(5, 7, 6, 0.98) 100%);
-        z-index: 20;
+        min-width: 0;
+        max-width: none;
+        flex: 0 0 auto;
+        border: none;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        z-index: 30;
+        pointer-events: none;
         overflow: visible;
     }
 
@@ -86,25 +91,42 @@
     .clock-wrapper {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
+        align-items: flex-start;
+        justify-content: flex-start;
         gap: 4px;
-        width: 100%;
-        max-width: 440px;
+        width: auto;
+        max-width: none;
         position: relative;
+        pointer-events: none;
     }
 
-    /* Section 2: Clock Size - Responsive clamp diameter, perfect circle */
+    /* Half-Circle Rotary Control: Anchored to left edge, other half off-screen */
     .nav-clock-housing {
-        width: clamp(170px, 52vw, 260px);
-        height: clamp(170px, 52vw, 260px);
+        position: relative;
+        left: 0;
+        transform: translateX(-50%);
+        width: clamp(118px, 32vw, 140px);
+        height: clamp(118px, 32vw, 140px);
         aspect-ratio: 1 / 1;
         border-radius: 50%;
-        position: relative;
+        background: radial-gradient(circle at 65% 50%, #071009 0%, #020503 70%, #000000 100%);
+        border: 1.5px solid rgba(0, 255, 102, 0.45);
+        box-shadow: 0 0 18px rgba(0, 255, 102, 0.22),
+                    inset 0 0 14px rgba(0, 255, 102, 0.12),
+                    4px 0 14px rgba(0, 0, 0, 0.9);
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: auto;
+    }
+
+    .nav-clock-housing:active {
+        cursor: grabbing;
     }
 
     .static-bezel {
@@ -116,13 +138,16 @@
     }
 
     .nav-clock-hub {
-        width: clamp(58px, 18vw, 86px);
-        height: clamp(58px, 18vw, 86px);
+        width: clamp(38px, 10vw, 48px);
+        height: clamp(38px, 10vw, 48px);
         border-radius: 50%;
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
+        background: radial-gradient(circle, #020403 0%, #09130c 80%, #010201 100%);
+        border: 1px solid rgba(0, 255, 102, 0.4);
+        box-shadow: 0 0 8px rgba(0, 255, 102, 0.2);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -131,28 +156,28 @@
     }
 
     .hub-tag {
-        font-size: 6px;
-        letter-spacing: 1px;
-        margin-bottom: 1px;
+        display: none;
     }
 
     .hub-name {
-        font-size: clamp(8px, 2.3vw, 11px);
-        letter-spacing: 1px;
+        font-size: clamp(7px, 2vw, 8.5px);
+        color: var(--neon-green);
+        letter-spacing: 0.5px;
         line-height: 1.1;
     }
 
     .hub-coords {
-        font-size: 7.5px;
+        font-size: 6px;
+        color: var(--text-dim);
         margin-top: 1px;
         display: block;
     }
 
-    /* Section 3: Stationary Active Pointer at 3 o'clock */
+    /* 3. Fixed Active Pointer with Dynamic Section Readout */
     .fixed-3oclock-marker {
         position: absolute;
         top: 50%;
-        right: -8px;
+        right: -6px;
         transform: translateY(-50%);
         display: flex;
         align-items: center;
@@ -164,43 +189,105 @@
     .marker-caliper-notch {
         width: 0;
         height: 0;
-        border-top: 5px solid transparent;
-        border-bottom: 5px solid transparent;
-        border-right: 9px solid var(--neon-green);
-        filter: drop-shadow(0 0 6px var(--neon-green));
+        border-top: 4px solid transparent;
+        border-bottom: 4px solid transparent;
+        border-right: 7px solid var(--neon-green);
+        filter: drop-shadow(0 0 5px var(--neon-green));
     }
 
     .marker-alignment-line {
-        width: 8px;
-        height: 2px;
+        width: 6px;
+        height: 1.5px;
         background: linear-gradient(to right, var(--neon-green), rgba(0, 255, 102, 0.3));
         box-shadow: 0 0 4px var(--neon-green);
     }
 
     .marker-led-node {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 50%;
         background: var(--neon-green);
-        box-shadow: 0 0 8px var(--neon-green);
+        box-shadow: 0 0 6px var(--neon-green);
     }
 
     .marker-instrument-tag {
-        font-size: 7.5px;
-        padding: 2px 5px;
-        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+        gap: 3px;
         background: rgba(4, 7, 5, 0.95);
         border: 1px solid var(--neon-green-border);
+        padding: 2px 6px;
         border-radius: 3px;
-        color: var(--neon-green);
+        box-shadow: 0 0 10px rgba(0, 255, 102, 0.25);
         white-space: nowrap;
     }
 
-    /* Section 7 & 12: Tappable node markers with active styling */
+    .tag-coord {
+        display: none !important;
+    }
+
+    .active-sec-name-readout {
+        display: inline-block !important;
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 8.5px;
+        letter-spacing: 1.2px;
+        color: var(--neon-green);
+        text-shadow: 0 0 8px var(--neon-green-glow);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .active-sec-name-readout.fade-transition {
+        opacity: 0;
+        transform: translateX(3px);
+    }
+
+    /* Dynamic Readout Below Half-Circle Arc */
+    .mobile-rotary-readout {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 6px;
+        padding: 2px 7px;
+        background: rgba(4, 8, 6, 0.92);
+        border: 1px solid rgba(0, 255, 102, 0.3);
+        border-radius: 3px;
+        box-shadow: 0 0 8px rgba(0, 255, 102, 0.18);
+        pointer-events: none;
+    }
+
+    .rotary-readout-arrow {
+        color: var(--neon-green);
+        font-size: 7px;
+    }
+
+    .rotary-readout-name {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 8.5px;
+        letter-spacing: 1px;
+        color: var(--neon-green);
+        text-shadow: 0 0 6px var(--neon-green-glow);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .rotary-readout-name.fade-transition {
+        opacity: 0;
+        transform: translateY(-2px);
+    }
+
+    /* 2. Hide Section Names Around Mobile Dial (Only Minimal Dots) */
+    .nav-node-label,
+    .nav-node-code {
+        display: none !important;
+    }
+
     .nav-node-btn {
-        padding: 2px;
-        min-width: 32px;
-        min-height: 32px;
+        padding: 0;
+        min-width: 26px;
+        min-height: 26px;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -209,65 +296,46 @@
     }
 
     .nav-node-marker {
-        width: 9px;
-        height: 9px;
+        width: 7px;
+        height: 7px;
     }
 
     .nav-node-dot {
-        width: 3.5px;
-        height: 3.5px;
-    }
-
-    .nav-node-code {
-        display: none;
-    }
-
-    .nav-node-label {
-        font-size: clamp(7px, 1.8vw, 8.5px);
-        letter-spacing: 0.5px;
-        white-space: nowrap;
-        text-transform: uppercase;
-    }
-
-    .clock-nav-controls {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
-        max-width: clamp(230px, 66vw, 300px);
-        gap: 8px;
-        margin-top: 2px;
-    }
-
-    .scroll-guidance {
-        font-size: 8px;
-        letter-spacing: 1px;
-    }
-
-    .section-jump-group {
-        gap: 4px;
-    }
-
-    .jump-tick {
-        width: 10px;
+        width: 3px;
         height: 3px;
     }
 
-    .jump-tick.active {
-        width: 16px;
+    .nav-node-btn.active .nav-node-marker {
+        width: 9px;
+        height: 9px;
+        background: #000000;
+        border-color: var(--neon-green);
+        box-shadow: 0 0 10px var(--neon-green), inset 0 0 4px var(--neon-green);
     }
 
-    /* Section 1 & 11: Content Area receives the majority of viewport */
+    .nav-node-btn.active .nav-node-dot {
+        background: var(--neon-green);
+        box-shadow: 0 0 6px var(--neon-green);
+    }
+
+    .clock-nav-controls {
+        display: none !important;
+    }
+
+    /* 5. Maximize Content Area (Eliminate redundant dead space) */
+    .content-clock-center-hub {
+        display: none !important;
+    }
+
     .clock-content-column {
         flex: 1 1 auto;
         min-height: 0;
         width: 100%;
-        height: auto;
-        padding: 4px 10px 8px 10px;
+        height: 100%;
+        padding: 0;
         overflow: hidden;
         position: relative;
-        background: radial-gradient(circle at 50% 50%, rgba(10, 16, 12, 0.5) 0%, rgba(4, 5, 5, 0.98) 100%);
+        background: radial-gradient(circle at 50% 50%, rgba(10, 16, 12, 0.4) 0%, rgba(4, 5, 5, 0.98) 100%);
     }
 
     .content-clock-stage,
@@ -277,43 +345,16 @@
         min-height: 0;
     }
 
-    .content-clock-center-hub {
-        top: 0;
-        z-index: 30;
-    }
-
-    .c-hub-container {
-        padding: 3px 14px;
-        border-radius: 14px;
-    }
-
-    .c-hub-title {
-        font-size: 13px;
-        letter-spacing: 2px;
-    }
-
-    .c-hub-code {
-        font-size: 8px;
-        letter-spacing: 1.5px;
-    }
-
-    .c-hub-subtitle {
-        display: none;
-    }
-
     .content-clock-viewport {
         width: 100%;
         height: 100%;
         min-height: 0;
-        padding-top: 34px;
+        padding-top: 0;
         position: relative;
         overflow: hidden;
     }
 
-    /* ========================================================
-       SECTION 5 & 6: INDEPENDENT SCROLLABLE SECTIONS
-       Do not force 100vh. Sections naturally size to their content.
-       ======================================================== */
+    /* Independent Scrollable Section Container */
     .content-section-panel {
         position: absolute;
         top: 0;
@@ -331,7 +372,7 @@
     }
 
     .content-section-panel.active {
-        display: block; /* Normal block flow: content expands naturally to its true height */
+        display: block; /* Content expands naturally to its true height */
     }
 
     .panel-inner {
@@ -340,7 +381,7 @@
         min-height: 100%;
         max-width: 100%;
         margin: 0 auto;
-        padding: 8px 10px 52px 10px;
+        padding: 8px 12px 40px clamp(72px, 20vw, 88px);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
@@ -359,18 +400,18 @@
     .home-identity-frame {
         grid-template-columns: 1fr;
         text-align: center;
-        gap: 16px;
+        gap: 14px;
     }
 
     .home-headline {
-        font-size: 28px;
+        font-size: 26px;
     }
 
     .home-credo {
         border-left: none;
         border-top: 2px solid var(--neon-green);
         padding-left: 0;
-        padding-top: 8px;
+        padding-top: 6px;
     }
 
     .home-telemetry-strip {
@@ -418,23 +459,81 @@
         overflow: visible;
         height: auto;
     }
+
+    /* 6. Compact Status Footer */
+    .system-hud-footer {
+        height: var(--footer-height);
+        padding: 0 12px;
+        font-size: 8.5px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .footer-nav-help {
+        display: none;
+    }
+
+    .footer-dim {
+        display: none;
+    }
+
+    .footer-left {
+        display: none;
+    }
+
+    .footer-center {
+        font-size: 8.5px;
+    }
+
+    .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 8.5px;
+    }
+
+    .footer-sep {
+        margin: 0 4px;
+    }
 }
 
 /* ========================================================
-   COMPACT MOBILE SCREENS (<= 640px) & PHONES DOWN TO 320px
+   COMPACT MOBILE SCREENS (375–430px)
    ======================================================== */
-@media screen and (max-width: 640px) {
+@media screen and (max-width: 430px) {
+    .nav-clock-housing {
+        width: clamp(112px, 30vw, 126px);
+        height: clamp(112px, 30vw, 126px);
+    }
+
+    .active-sec-name-readout,
+    .rotary-readout-name {
+        font-size: 8px;
+        letter-spacing: 1px;
+    }
+
+    .panel-inner {
+        padding: 6px 10px 36px clamp(68px, 19vw, 80px);
+    }
+}
+
+/* ========================================================
+   ULTRA-COMPACT PHONES (320–374px)
+   Ensure zero clipping, seamless fit down to 320px
+   ======================================================== */
+@media screen and (max-width: 374px) {
     :root {
-        --hud-height: 50px;
-        --footer-height: 36px;
+        --hud-height: 42px;
+        --footer-height: 28px;
     }
 
     .system-hud-header {
-        padding: 0 10px;
+        padding: 0 6px;
     }
 
     .brand-text {
-        font-size: 11px;
+        font-size: 10px;
     }
 
     .system-status-chip {
@@ -442,8 +541,8 @@
     }
 
     .hud-nav-summary {
-        padding: 3px 8px;
-        font-size: 9.5px;
+        padding: 2px 6px;
+        font-size: 8.5px;
     }
 
     .audio-label {
@@ -451,98 +550,101 @@
     }
 
     .audio-toggle-btn {
-        padding: 5px 8px;
+        padding: 4px 6px;
     }
 
     .hud-resume-btn {
-        padding: 4px 8px;
-        font-size: 9.5px;
+        padding: 3px 6px;
+        font-size: 8.5px;
     }
 
     .system-hud-footer {
-        padding: 0 10px;
-        font-size: 9px;
+        padding: 0 6px;
+        font-size: 8px;
     }
 
-    .footer-nav-help {
-        display: none;
-    }
-
-    /* Section 2: Clock maintains responsive circular diameter */
     .clock-nav-column {
-        flex: 0 0 auto;
-        height: auto;
-        padding: 6px 8px 4px 8px;
+        top: 6px;
+        left: 0;
     }
 
     .nav-clock-housing {
-        width: clamp(170px, 52vw, 240px);
-        height: clamp(170px, 52vw, 240px);
-        aspect-ratio: 1 / 1;
-        border-radius: 50%;
+        width: clamp(100px, 29vw, 110px);
+        height: clamp(100px, 29vw, 110px);
+    }
+
+    .nav-clock-hub {
+        width: 34px;
+        height: 34px;
+    }
+
+    .hub-name {
+        font-size: 7px;
     }
 
     .fixed-3oclock-marker {
-        right: -6px;
+        right: -4px;
         gap: 2px;
     }
 
     .marker-alignment-line {
-        width: 6px;
+        width: 4px;
     }
 
     .marker-instrument-tag {
-        font-size: 7px;
+        font-size: 6.5px;
         padding: 2px 4px;
     }
 
-    .marker-instrument-tag .tag-coord {
-        font-size: 6.5px;
+    .active-sec-name-readout,
+    .rotary-readout-name {
+        font-size: 7.5px;
+        letter-spacing: 0.8px;
     }
 
-    .c-hub-title {
-        font-size: 12px;
+    .panel-inner {
+        padding: 4px 8px 32px clamp(60px, 18vw, 70px);
     }
 
     .home-avatar-aperture {
-        width: 104px;
-        height: 104px;
+        width: 96px;
+        height: 96px;
     }
 
     .avatar-img-wrap {
-        width: 90px;
-        height: 90px;
+        width: 82px;
+        height: 82px;
     }
 
     .avatar-badge {
-        font-size: 7px;
-        padding: 1px 6px;
+        font-size: 6.5px;
+        padding: 1px 5px;
     }
 
     .home-headline {
-        font-size: 22px;
+        font-size: 20px;
         word-break: break-word;
     }
 
     .home-role {
-        font-size: 10.5px;
-    }
-
-    .home-credo {
-        font-size: 12px;
-    }
-
-    .home-bio-summary {
-        font-size: 11px;
-    }
-
-    .action-btn {
-        padding: 6px 10px;
         font-size: 9.5px;
     }
 
+    .home-credo {
+        font-size: 11px;
+    }
+
+    .home-bio-summary {
+        font-size: 10.5px;
+    }
+
+    .action-btn {
+        padding: 5px 8px;
+        font-size: 8.5px;
+    }
+
     .panel-inner {
-        padding: 6px 8px 48px 8px;
+        padding: 4px 6px 36px 6px;
     }
 
     .skills-orbital-constellation {
@@ -551,21 +653,21 @@
 
     .achievement-orbital-milestone {
         flex-direction: column;
-        padding: 16px 12px;
+        padding: 12px 8px;
         text-align: center;
     }
 
     .milestone-icon-hub {
-        width: 48px;
-        height: 48px;
+        width: 42px;
+        height: 42px;
     }
 
     .milestone-headline {
-        font-size: 16px;
+        font-size: 15px;
     }
 
     .contact-statement {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .cursor-tracker {
@@ -587,10 +689,10 @@
     }
 
     .clock-nav-column {
-        flex: 0 0 clamp(160px, 28vw, 240px);
-        width: clamp(160px, 28vw, 240px);
-        min-width: 150px;
-        max-width: 250px;
+        flex: 0 0 clamp(140px, 24vw, 200px);
+        width: clamp(140px, 24vw, 200px);
+        min-width: 130px;
+        max-width: 210px;
         height: 100%;
         border-right: 1px solid var(--border-graphite);
         border-bottom: none;
@@ -599,19 +701,19 @@
     }
 
     .clock-wrapper {
-        gap: 6px;
+        gap: 4px;
     }
 
     .nav-clock-housing {
-        width: clamp(130px, 23vw, 180px);
-        height: clamp(130px, 23vw, 180px);
+        width: clamp(100px, 18vw, 140px);
+        height: clamp(100px, 18vw, 140px);
         aspect-ratio: 1 / 1;
         border-radius: 50%;
     }
 
     .nav-clock-hub {
-        width: clamp(48px, 9vw, 64px);
-        height: clamp(48px, 9vw, 64px);
+        width: clamp(40px, 7vw, 54px);
+        height: clamp(40px, 7vw, 54px);
     }
 
     .clock-nav-controls {
@@ -622,17 +724,17 @@
 
     .clock-content-column {
         flex: 1 1 auto;
-        width: calc(100% - clamp(160px, 28vw, 240px));
+        width: calc(100% - clamp(140px, 24vw, 200px));
         height: 100%;
-        padding: 6px 14px;
+        padding: 4px 12px;
     }
 
     .content-clock-viewport {
-        padding-top: 36px;
+        padding-top: 4px;
     }
 
     .panel-inner {
-        padding: 8px 12px 36px 12px;
+        padding: 6px 10px 32px 10px;
     }
 }
 

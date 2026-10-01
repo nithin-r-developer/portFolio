@@ -769,6 +769,14 @@ button {
     font-size: 8px;
 }
 
+.active-sec-name-readout {
+    display: none;
+}
+
+.mobile-rotary-readout {
+    display: none;
+}
+
 .nav-clock-rotor {
     position: absolute;
     width: 100%;
