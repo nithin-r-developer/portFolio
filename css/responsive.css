@@ -42,6 +42,11 @@
     }
 }
 
+/* ========================================================
+   MOBILE & TABLET PORTRAIT NAVIGATION (<= 992px)
+   Section 1: Mobile Navigation Structure
+   Compact navigation clock at the top, content window below.
+   ======================================================== */
 @media screen and (max-width: 992px) {
     html, body {
         overflow: hidden;
@@ -50,16 +55,28 @@
     .dual-clock-container {
         flex-direction: column;
         height: calc(100vh - var(--hud-height) - var(--footer-height));
+        height: calc(100dvh - var(--hud-height) - var(--footer-height));
+        overflow: hidden;
+        position: relative;
     }
 
+    /* Section 1: Navigation clock column at top of viewport */
     .clock-nav-column {
-        flex: 0 0 170px;
+        flex: 0 0 auto;
         max-width: 100%;
         min-width: 100%;
-        height: 170px;
+        width: 100%;
+        height: auto;
         border-right: none;
         border-bottom: 1px solid var(--border-graphite);
-        padding: 8px 0;
+        padding: 8px 16px 6px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at 50% 50%, rgba(14, 20, 16, 0.75) 0%, rgba(5, 7, 6, 0.98) 100%);
+        z-index: 20;
+        overflow: visible;
     }
 
     .clock-panel-label {
@@ -67,43 +84,138 @@
     }
 
     .clock-wrapper {
-        gap: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        width: 100%;
+        max-width: 440px;
+        position: relative;
     }
 
+    /* Section 2: Clock Size - Responsive clamp diameter, perfect circle */
     .nav-clock-housing {
-        width: 140px;
-        height: 140px;
+        width: clamp(180px, 52vw, 260px);
+        height: clamp(180px, 52vw, 260px);
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .static-bezel {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        pointer-events: none;
     }
 
     .nav-clock-hub {
-        width: 58px;
-        height: 58px;
+        width: clamp(62px, 18vw, 86px);
+        height: clamp(62px, 18vw, 86px);
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 6;
+        pointer-events: none;
     }
 
     .hub-tag {
         font-size: 6px;
+        letter-spacing: 1px;
+        margin-bottom: 1px;
     }
 
     .hub-name {
-        font-size: 9px;
+        font-size: clamp(8px, 2.3vw, 11px);
+        letter-spacing: 1px;
+        line-height: 1.1;
     }
 
     .hub-coords {
-        display: none;
+        font-size: 7.5px;
+        margin-top: 1px;
+        display: block;
     }
 
+    /* Section 3: Stationary Active Pointer at 3 o'clock */
+    .fixed-3oclock-marker {
+        position: absolute;
+        top: 50%;
+        right: -8px;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        z-index: 25;
+        pointer-events: none;
+    }
+
+    .marker-caliper-notch {
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-right: 9px solid var(--neon-green);
+        filter: drop-shadow(0 0 6px var(--neon-green));
+    }
+
+    .marker-alignment-line {
+        width: 8px;
+        height: 2px;
+        background: linear-gradient(to right, var(--neon-green), rgba(0, 255, 102, 0.3));
+        box-shadow: 0 0 4px var(--neon-green);
+    }
+
+    .marker-led-node {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--neon-green);
+        box-shadow: 0 0 8px var(--neon-green);
+    }
+
+    .marker-instrument-tag {
+        font-size: 7.5px;
+        padding: 2px 5px;
+        letter-spacing: 1px;
+        background: rgba(4, 7, 5, 0.95);
+        border: 1px solid var(--neon-green-border);
+        border-radius: 3px;
+        color: var(--neon-green);
+        white-space: nowrap;
+    }
+
+    /* Section 7 & 12: Tappable node markers with active styling */
     .nav-node-btn {
         padding: 2px;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
     }
 
     .nav-node-marker {
-        width: 8px;
-        height: 8px;
+        width: 9px;
+        height: 9px;
     }
 
     .nav-node-dot {
-        width: 3px;
-        height: 3px;
+        width: 3.5px;
+        height: 3.5px;
     }
 
     .nav-node-code {
@@ -111,72 +223,99 @@
     }
 
     .nav-node-label {
-        font-size: 7.5px;
+        font-size: clamp(7px, 1.8vw, 8.5px);
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+        text-transform: uppercase;
     }
 
     .clock-nav-controls {
-        gap: 6px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: clamp(230px, 66vw, 300px);
+        gap: 8px;
+        margin-top: 2px;
     }
 
     .scroll-guidance {
-        font-size: 9px;
+        font-size: 8px;
+        letter-spacing: 1px;
     }
 
-    .jump-tick {
-        width: 12px;
-        height: 2.5px;
-    }
-
-    .jump-tick.active {
-        width: 18px;
-    }
-
-    .fixed-3oclock-marker {
-        right: -10px;
+    .section-jump-group {
         gap: 4px;
     }
 
-    .marker-alignment-line {
+    .jump-tick {
         width: 10px;
+        height: 3px;
     }
 
-    .marker-instrument-tag {
-        font-size: 7.5px;
-        padding: 2px 5px;
+    .jump-tick.active {
+        width: 16px;
     }
 
+    /* Section 1 & 11: Content Area receives the majority of viewport */
     .clock-content-column {
         flex: 1 1 auto;
-        height: calc(100% - 170px);
+        min-height: 0;
         width: 100%;
-        padding: 8px 16px;
+        height: auto;
+        padding: 6px 14px 10px 14px;
+        overflow: hidden;
+        position: relative;
+        background: radial-gradient(circle at 50% 50%, rgba(10, 16, 12, 0.5) 0%, rgba(4, 5, 5, 0.98) 100%);
     }
 
+    .content-clock-stage,
     .content-clock-housing {
         width: 100%;
         height: 100%;
+        min-height: 0;
     }
 
     .content-clock-center-hub {
-        top: 6px;
+        top: 0;
+        z-index: 30;
     }
 
     .c-hub-container {
-        padding: 4px 14px;
+        padding: 3px 14px;
+        border-radius: 14px;
     }
 
     .c-hub-title {
-        font-size: 16px;
+        font-size: 13px;
+        letter-spacing: 2px;
     }
 
     .c-hub-code {
-        font-size: 9px;
+        font-size: 8px;
+        letter-spacing: 1.5px;
+    }
+
+    .c-hub-subtitle {
+        display: none;
     }
 
     .content-clock-viewport {
         width: 100%;
         height: 100%;
-        padding-top: 44px;
+        min-height: 0;
+        padding-top: 36px;
+        position: relative;
+    }
+
+    /* Section 6 & 13: Native smooth scrolling within panel without nested traps */
+    .content-section-panel {
+        padding: 6px 8px 18px 8px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
     }
 
     .home-identity-frame {
@@ -186,7 +325,7 @@
     }
 
     .home-headline {
-        font-size: 32px;
+        font-size: 30px;
     }
 
     .home-credo {
@@ -207,25 +346,22 @@
 
     .about-dossier-grid {
         grid-template-columns: 1fr;
-        max-height: 52vh;
-        overflow-y: auto;
+        max-height: none;
     }
 
     .skills-orbital-constellation {
-        grid-template-columns: repeat(2, 1fr);
-        max-height: 48vh;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        max-height: none;
     }
 
     .contact-terminal-grid {
         grid-template-columns: 1fr;
-        max-height: 52vh;
-        overflow-y: auto;
+        max-height: none;
     }
 
     .certs-grid {
         grid-template-columns: 1fr;
-        max-height: 50vh;
-        overflow-y: auto;
+        max-height: none;
     }
 
     .cert-preview-frame {
@@ -233,6 +369,9 @@
     }
 }
 
+/* ========================================================
+   COMPACT MOBILE SCREENS (<= 640px)
+   ======================================================== */
 @media screen and (max-width: 640px) {
     :root {
         --hud-height: 50px;
@@ -278,9 +417,18 @@
         display: none;
     }
 
+    /* Section 2: Clock maintains responsive circular diameter */
     .clock-nav-column {
-        flex: 0 0 145px;
-        height: 145px;
+        flex: 0 0 auto;
+        height: auto;
+        padding: 6px 12px 4px 12px;
+    }
+
+    .nav-clock-housing {
+        width: clamp(180px, 52vw, 240px);
+        height: clamp(180px, 52vw, 240px);
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
     }
 
     .fixed-3oclock-marker {
@@ -292,36 +440,17 @@
         width: 6px;
     }
 
+    .marker-instrument-tag {
+        font-size: 7px;
+        padding: 2px 4px;
+    }
+
     .marker-instrument-tag .tag-coord {
-        display: none;
-    }
-
-    .nav-clock-housing {
-        width: 120px;
-        height: 120px;
-    }
-
-    .nav-clock-hub {
-        width: 48px;
-        height: 48px;
-    }
-
-    .hub-name {
-        font-size: 8px;
-        letter-spacing: 0.5px;
-    }
-
-    .content-clock-housing {
-        width: 100%;
-        height: 100%;
-    }
-
-    .content-clock-center-hub {
-        top: 2px;
+        font-size: 6.5px;
     }
 
     .c-hub-title {
-        font-size: 14px;
+        font-size: 12px;
     }
 
     .home-avatar-aperture {
@@ -362,7 +491,6 @@
 
     .skills-orbital-constellation {
         grid-template-columns: 1fr;
-        max-height: 48vh;
     }
 
     .achievement-orbital-milestone {
@@ -389,6 +517,69 @@
     }
 }
 
+/* ========================================================
+   SECTION 14: MOBILE LANDSCAPE ORIENTATION
+   Side-by-side structure: Clock on left, Content on right.
+   Breakpoint based on available dimensions.
+   ======================================================== */
+@media screen and (max-width: 992px) and (orientation: landscape),
+       screen and (max-height: 520px) and (min-width: 480px) {
+    .dual-clock-container {
+        flex-direction: row;
+        height: calc(100vh - var(--hud-height) - var(--footer-height));
+        height: calc(100dvh - var(--hud-height) - var(--footer-height));
+    }
+
+    .clock-nav-column {
+        flex: 0 0 clamp(160px, 28vw, 240px);
+        width: clamp(160px, 28vw, 240px);
+        min-width: 150px;
+        max-width: 250px;
+        height: 100%;
+        border-right: 1px solid var(--border-graphite);
+        border-bottom: none;
+        padding: 6px;
+        justify-content: center;
+    }
+
+    .clock-wrapper {
+        gap: 6px;
+    }
+
+    .nav-clock-housing {
+        width: clamp(130px, 23vw, 180px);
+        height: clamp(130px, 23vw, 180px);
+        aspect-ratio: 1 / 1;
+        border-radius: 50%;
+    }
+
+    .nav-clock-hub {
+        width: clamp(48px, 9vw, 64px);
+        height: clamp(48px, 9vw, 64px);
+    }
+
+    .clock-nav-controls {
+        flex-direction: column;
+        gap: 3px;
+        max-width: 100%;
+    }
+
+    .clock-content-column {
+        flex: 1 1 auto;
+        width: calc(100% - clamp(160px, 28vw, 240px));
+        height: 100%;
+        padding: 6px 16px;
+    }
+
+    .content-clock-viewport {
+        padding-top: 36px;
+    }
+}
+
+/* ========================================================
+   SECTION 15: REDUCED MOTION
+   Retain functional section navigation, eliminate long transitions.
+   ======================================================== */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -399,7 +590,9 @@
 
     .nav-clock-rotor,
     .content-clock-rotor,
-    .device-bezel {
+    .device-bezel,
+    .content-section-panel,
+    .nav-node-btn {
         animation: none !important;
         transition: none !important;
     }
