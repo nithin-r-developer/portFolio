@@ -96,8 +96,8 @@
 
     /* Section 2: Clock Size - Responsive clamp diameter, perfect circle */
     .nav-clock-housing {
-        width: clamp(180px, 52vw, 260px);
-        height: clamp(180px, 52vw, 260px);
+        width: clamp(170px, 52vw, 260px);
+        height: clamp(170px, 52vw, 260px);
         aspect-ratio: 1 / 1;
         border-radius: 50%;
         position: relative;
@@ -116,8 +116,8 @@
     }
 
     .nav-clock-hub {
-        width: clamp(62px, 18vw, 86px);
-        height: clamp(62px, 18vw, 86px);
+        width: clamp(58px, 18vw, 86px);
+        height: clamp(58px, 18vw, 86px);
         border-radius: 50%;
         position: absolute;
         top: 50%;
@@ -264,7 +264,7 @@
         min-height: 0;
         width: 100%;
         height: auto;
-        padding: 6px 14px 10px 14px;
+        padding: 4px 10px 8px 10px;
         overflow: hidden;
         position: relative;
         background: radial-gradient(circle at 50% 50%, rgba(10, 16, 12, 0.5) 0%, rgba(4, 5, 5, 0.98) 100%);
@@ -305,17 +305,55 @@
         width: 100%;
         height: 100%;
         min-height: 0;
-        padding-top: 36px;
+        padding-top: 34px;
         position: relative;
+        overflow: hidden;
     }
 
-    /* Section 6 & 13: Native smooth scrolling within panel without nested traps */
+    /* ========================================================
+       SECTION 5 & 6: INDEPENDENT SCROLLABLE SECTIONS
+       Do not force 100vh. Sections naturally size to their content.
+       ======================================================== */
     .content-section-panel {
-        padding: 6px 8px 18px 8px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: none;
+        padding: 0;
         overflow-y: auto;
         overflow-x: hidden;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-y: contain;
+        scrollbar-width: thin;
+        scrollbar-color: var(--neon-green-border) transparent;
+    }
+
+    .content-section-panel.active {
+        display: block; /* Normal block flow: content expands naturally to its true height */
+    }
+
+    .panel-inner {
+        width: 100%;
+        height: auto;
+        min-height: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 8px 10px 52px 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        box-sizing: border-box;
+    }
+
+    .panel-home-layout {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
 
     .home-identity-frame {
@@ -325,7 +363,7 @@
     }
 
     .home-headline {
-        font-size: 30px;
+        font-size: 28px;
     }
 
     .home-credo {
@@ -347,30 +385,43 @@
     .about-dossier-grid {
         grid-template-columns: 1fr;
         max-height: none;
+        overflow: visible;
     }
 
     .skills-orbital-constellation {
-        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         max-height: none;
+        overflow: visible;
     }
 
     .contact-terminal-grid {
         grid-template-columns: 1fr;
         max-height: none;
+        overflow: visible;
     }
 
     .certs-grid {
         grid-template-columns: 1fr;
         max-height: none;
+        overflow: visible;
     }
 
     .cert-preview-frame {
         height: 140px;
     }
+
+    .project-viewport-stage {
+        overflow: visible;
+    }
+
+    .project-display-card {
+        overflow: visible;
+        height: auto;
+    }
 }
 
 /* ========================================================
-   COMPACT MOBILE SCREENS (<= 640px)
+   COMPACT MOBILE SCREENS (<= 640px) & PHONES DOWN TO 320px
    ======================================================== */
 @media screen and (max-width: 640px) {
     :root {
@@ -379,7 +430,7 @@
     }
 
     .system-hud-header {
-        padding: 0 14px;
+        padding: 0 10px;
     }
 
     .brand-text {
@@ -391,8 +442,8 @@
     }
 
     .hud-nav-summary {
-        padding: 3px 10px;
-        font-size: 10px;
+        padding: 3px 8px;
+        font-size: 9.5px;
     }
 
     .audio-label {
@@ -404,13 +455,13 @@
     }
 
     .hud-resume-btn {
-        padding: 5px 10px;
-        font-size: 10px;
+        padding: 4px 8px;
+        font-size: 9.5px;
     }
 
     .system-hud-footer {
-        padding: 0 14px;
-        font-size: 9.5px;
+        padding: 0 10px;
+        font-size: 9px;
     }
 
     .footer-nav-help {
@@ -421,12 +472,12 @@
     .clock-nav-column {
         flex: 0 0 auto;
         height: auto;
-        padding: 6px 12px 4px 12px;
+        padding: 6px 8px 4px 8px;
     }
 
     .nav-clock-housing {
-        width: clamp(180px, 52vw, 240px);
-        height: clamp(180px, 52vw, 240px);
+        width: clamp(170px, 52vw, 240px);
+        height: clamp(170px, 52vw, 240px);
         aspect-ratio: 1 / 1;
         border-radius: 50%;
     }
@@ -454,13 +505,13 @@
     }
 
     .home-avatar-aperture {
-        width: 110px;
-        height: 110px;
+        width: 104px;
+        height: 104px;
     }
 
     .avatar-img-wrap {
-        width: 96px;
-        height: 96px;
+        width: 90px;
+        height: 90px;
     }
 
     .avatar-badge {
@@ -469,24 +520,29 @@
     }
 
     .home-headline {
-        font-size: 24px;
+        font-size: 22px;
+        word-break: break-word;
     }
 
     .home-role {
-        font-size: 11px;
+        font-size: 10.5px;
     }
 
     .home-credo {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .home-bio-summary {
-        font-size: 11.5px;
+        font-size: 11px;
     }
 
     .action-btn {
-        padding: 6px 12px;
-        font-size: 10px;
+        padding: 6px 10px;
+        font-size: 9.5px;
+    }
+
+    .panel-inner {
+        padding: 6px 8px 48px 8px;
     }
 
     .skills-orbital-constellation {
@@ -495,21 +551,21 @@
 
     .achievement-orbital-milestone {
         flex-direction: column;
-        padding: 18px;
+        padding: 16px 12px;
         text-align: center;
     }
 
     .milestone-icon-hub {
-        width: 52px;
-        height: 52px;
+        width: 48px;
+        height: 48px;
     }
 
     .milestone-headline {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .contact-statement {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .cursor-tracker {
@@ -568,11 +624,15 @@
         flex: 1 1 auto;
         width: calc(100% - clamp(160px, 28vw, 240px));
         height: 100%;
-        padding: 6px 16px;
+        padding: 6px 14px;
     }
 
     .content-clock-viewport {
         padding-top: 36px;
+    }
+
+    .panel-inner {
+        padding: 8px 12px 36px 12px;
     }
 }
 

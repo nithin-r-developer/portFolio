@@ -19,8 +19,13 @@
     let activeIndex = 0;
     let currentClockAngle = 0; // Cumulative angle in degrees
     let isTransitioning = false;
-    let queuedTarget = null; // Max 1 queued section change (Section 10)
+    let queuedTarget = null; // Max 1 queued section change
     const TRANSITION_DURATION = 850;
+
+    // Buffer tolerance for boundary detection
+    const EDGE_THRESHOLD = 5;
+    // Threshold for intentional vertical section change swipe
+    const SWIPE_THRESHOLD = 50;
 
     let navRotorEl;
     let contentRotorEl;
@@ -133,7 +138,7 @@
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                goToSection(idx);
+                goToSection(idx, false);
             });
 
             nodeWrap.appendChild(btn);
@@ -153,7 +158,7 @@
             tick.title = `${sec.code} - ${sec.title}`;
             tick.setAttribute('role', 'button');
             tick.setAttribute('aria-label', `Jump to section ${sec.title}`);
-            tick.addEventListener('click', () => goToSection(idx));
+            tick.addEventListener('click', () => goToSection(idx, false));
             jumpDotsContainerEl.appendChild(tick);
         });
     }
@@ -169,15 +174,15 @@
     }
 
     // Primary synchronized navigation function
-    function goToSection(targetIndex) {
+    function goToSection(targetIndex, startAtBottom = false) {
         if (targetIndex < 0 || targetIndex >= TOTAL_SECTIONS) return;
 
         // If target is already active and no transition is running
         if (targetIndex === activeIndex && !isTransitioning) return;
 
-        // Section 10: RAPID SWIPES & QUEUING (Queue a maximum of ONE additional section change)
+        // Rapid swipes queueing: queue max ONE additional section change
         if (isTransitioning) {
-            queuedTarget = targetIndex;
+            queuedTarget = { index: targetIndex, startAtBottom: startAtBottom };
             return;
         }
 
@@ -245,12 +250,19 @@
         const nextPanel = contentPanels[activeIndex];
 
         if (!prevPanel || prevPanel === nextPanel) {
-            if (nextPanel) nextPanel.classList.add('active');
+            if (nextPanel) {
+                nextPanel.classList.add('active');
+                if (startAtBottom) {
+                    nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
+                } else {
+                    nextPanel.scrollTop = 0;
+                }
+            }
             finishTransition();
             return;
         }
 
-        // Section 15: REDUCED MOTION
+        // Reduced motion handling
         if (prefersReducedMotion) {
             prevPanel.classList.remove('active');
             prevPanel.style.display = '';
@@ -262,26 +274,31 @@
             nextPanel.style.transform = '';
             nextPanel.style.opacity = '';
             nextPanel.style.pointerEvents = '';
+            if (startAtBottom) {
+                nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
+            } else {
+                nextPanel.scrollTop = 0;
+            }
             finishTransition();
             return;
         }
 
         // Run synchronized mechanical arc transition
-        runContinuousArcTransition(prevPanel, nextPanel, isForward, finishTransition);
+        runContinuousArcTransition(prevPanel, nextPanel, isForward, startAtBottom, finishTransition);
     }
 
     function finishTransition() {
         isTransitioning = false;
         if (queuedTarget !== null) {
-            const nextTarget = queuedTarget;
+            const next = queuedTarget;
             queuedTarget = null;
-            goToSection(nextTarget);
+            goToSection(next.index, next.startAtBottom);
         }
     }
 
-    // Section 11: Scaled mechanical curved path transition
+    // Scaled mechanical curved path transition
     // BOTTOM-CENTER -> LEFT/CLOSER TO NAVIGATION CLOCK -> TOP-CENTER
-    function runContinuousArcTransition(prevPanel, nextPanel, isForward, onComplete) {
+    function runContinuousArcTransition(prevPanel, nextPanel, isForward, startAtBottom, onComplete) {
         if (activeAnimFrameId) {
             cancelAnimationFrame(activeAnimFrameId);
             activeAnimFrameId = null;
@@ -303,13 +320,17 @@
             : Math.round(window.innerHeight * 1.15);
 
         if (prevPanel && prevPanel !== nextPanel) {
-            prevPanel.style.display = 'flex';
+            prevPanel.style.display = isMobile ? 'block' : 'flex';
             prevPanel.style.pointerEvents = 'none';
         }
         if (nextPanel) {
-            nextPanel.style.display = 'flex';
+            nextPanel.style.display = isMobile ? 'block' : 'flex';
             nextPanel.style.pointerEvents = 'none';
-            nextPanel.scrollTop = 0;
+            if (startAtBottom && isMobile) {
+                nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
+            } else {
+                nextPanel.scrollTop = 0;
+            }
         }
 
         function step(now) {
@@ -375,80 +396,78 @@
 
     function nextSection() {
         const target = (activeIndex + 1) % TOTAL_SECTIONS;
-        goToSection(target);
+        goToSection(target, false);
     }
 
     function prevSection() {
         const target = (activeIndex - 1 + TOTAL_SECTIONS) % TOTAL_SECTIONS;
-        goToSection(target);
+        goToSection(target, true);
     }
 
-    // Wheel navigation (Desktop)
-    let accumulatedDelta = 0;
-    let wheelDebounceTimer;
+    // Mouse wheel navigation on Desktop / Laptop
+    let accumulatedWheelDelta = 0;
+    let wheelDebounceTimer = null;
 
     function handleWheel(e) {
-        // Allow native content scroll inside scrollable content panels
-        const scrollable = findScrollableAncestor(e.target);
-        if (scrollable && scrollable.scrollHeight > scrollable.clientHeight + 4) {
-            const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
-            if (e.deltaY > 0 && scrollable.scrollTop < maxScroll - 5) {
-                return;
-            }
-            if (e.deltaY < 0 && scrollable.scrollTop > 5) {
-                return;
-            }
-        }
-
-        e.preventDefault();
-
-        accumulatedDelta += e.deltaY;
-        clearTimeout(wheelDebounceTimer);
-        wheelDebounceTimer = setTimeout(() => {
-            accumulatedDelta = 0;
-        }, 150);
-
-        const SCROLL_THRESHOLD = 40;
-        if (accumulatedDelta > SCROLL_THRESHOLD) {
-            accumulatedDelta = 0;
-            nextSection();
-        } else if (accumulatedDelta < -SCROLL_THRESHOLD) {
-            accumulatedDelta = 0;
-            prevSection();
-        }
-    }
-
-    // Section 5 & 13: Touch Swipe Navigation & Gesture Conflict Prevention
-    let touchStartY = 0;
-    let touchStartX = 0;
-    let touchStartScrollEl = null;
-    let touchStartScrollTop = 0;
-    let touchIgnored = false;
-
-    function findScrollableAncestor(target) {
-        if (!target) return null;
-        let el = target;
         const activePanel = document.querySelector('.content-section-panel.active');
+        if (!activePanel) return;
 
-        while (el && el !== document.body && el !== document.documentElement) {
-            if (el.classList && el.classList.contains('content-section-panel')) {
-                if (el.scrollHeight > el.clientHeight + 4) return el;
-                break;
+        const st = activePanel.scrollTop;
+        const ch = activePanel.clientHeight;
+        const sh = activePanel.scrollHeight;
+        const isScrollable = (sh > ch + EDGE_THRESHOLD);
+        const isAtBottom = isScrollable ? (st + ch >= sh - EDGE_THRESHOLD) : true;
+        const isAtTop = isScrollable ? (st <= EDGE_THRESHOLD) : true;
+
+        if (e.deltaY > 0) {
+            // Scrolling downward through content
+            if (!isAtBottom) {
+                // Allow native content scroll down
+                accumulatedWheelDelta = 0;
+                return;
             }
-            try {
-                const style = window.getComputedStyle(el);
-                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && el.scrollHeight > el.clientHeight + 4) {
-                    return el;
-                }
-            } catch (err) {}
-            el = el.parentElement;
-        }
+            // Already at bottom: accumulate wheel delta to trigger NEXT SECTION
+            e.preventDefault();
+            accumulatedWheelDelta += e.deltaY;
+            clearTimeout(wheelDebounceTimer);
+            wheelDebounceTimer = setTimeout(() => { accumulatedWheelDelta = 0; }, 200);
 
-        if (activePanel && activePanel.scrollHeight > activePanel.clientHeight + 4) {
-            return activePanel;
+            if (accumulatedWheelDelta >= 70) {
+                accumulatedWheelDelta = 0;
+                nextSection();
+            }
+        } else if (e.deltaY < 0) {
+            // Scrolling upward through content
+            if (!isAtTop) {
+                // Allow native content scroll up
+                accumulatedWheelDelta = 0;
+                return;
+            }
+            // Already at top: accumulate wheel delta to trigger PREVIOUS SECTION
+            e.preventDefault();
+            accumulatedWheelDelta += e.deltaY;
+            clearTimeout(wheelDebounceTimer);
+            wheelDebounceTimer = setTimeout(() => { accumulatedWheelDelta = 0; }, 200);
+
+            if (accumulatedWheelDelta <= -70) {
+                accumulatedWheelDelta = 0;
+                prevSection();
+            }
         }
-        return null;
     }
+
+    // ========================================================
+    // MOBILE SECTION SCROLL LOCK - TOUCH GESTURE HANDLING
+    // ========================================================
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchStartTime = 0;
+    let touchIgnored = false;
+    let touchIsClock = false;
+    let touchStartIsAtBottom = false;
+    let touchStartIsAtTop = false;
+    let touchStartIsScrollable = false;
+    let activePanelAtTouchStart = null;
 
     function handleTouchStart(e) {
         if (e.touches.length !== 1) return;
@@ -456,8 +475,7 @@
         touchIgnored = false;
         const target = e.target;
 
-        // Section 13: GESTURE CONFLICT PREVENTION
-        // 1. Typing into an input, interacting with form elements
+        // 1. Gesture conflict prevention: form inputs and text selection
         if (target.closest('input, textarea, select, [contenteditable="true"]')) {
             touchIgnored = true;
             return;
@@ -476,22 +494,46 @@
             return;
         }
 
-        touchStartY = e.touches[0].clientY;
         touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        touchStartTime = performance.now();
 
-        // Check if touch is on the navigation clock or inside content
-        const isClockTouch = !!target.closest('.clock-nav-column');
-        if (isClockTouch) {
-            touchStartScrollEl = null;
-            touchStartScrollTop = 0;
+        // Check if touch is on the navigation clock or inside section content
+        touchIsClock = !!target.closest('.clock-nav-column');
+
+        if (!touchIsClock) {
+            const activePanel = document.querySelector('.content-section-panel.active');
+            activePanelAtTouchStart = activePanel;
+
+            if (activePanel) {
+                const st = activePanel.scrollTop;
+                const ch = activePanel.clientHeight;
+                const sh = activePanel.scrollHeight;
+
+                touchStartIsScrollable = (sh > ch + EDGE_THRESHOLD);
+                // Did gesture begin while ALREADY at the bottom boundary?
+                touchStartIsAtBottom = touchStartIsScrollable
+                    ? (st + ch >= sh - EDGE_THRESHOLD)
+                    : true;
+                // Did gesture begin while ALREADY at the top boundary?
+                touchStartIsAtTop = touchStartIsScrollable
+                    ? (st <= EDGE_THRESHOLD)
+                    : true;
+            } else {
+                touchStartIsScrollable = false;
+                touchStartIsAtBottom = true;
+                touchStartIsAtTop = true;
+            }
         } else {
-            touchStartScrollEl = findScrollableAncestor(target);
-            touchStartScrollTop = touchStartScrollEl ? touchStartScrollEl.scrollTop : 0;
+            activePanelAtTouchStart = null;
+            touchStartIsScrollable = false;
+            touchStartIsAtBottom = true;
+            touchStartIsAtTop = true;
         }
     }
 
     function handleTouchEnd(e) {
-        if (touchIgnored || e.changedTouches.length === 0) return;
+        if (touchIgnored || isTransitioning || e.changedTouches.length === 0) return;
 
         if (window.getSelection && window.getSelection().toString().trim().length > 0) {
             return;
@@ -504,35 +546,57 @@
         const absDeltaY = Math.abs(deltaY);
         const absDeltaX = Math.abs(deltaX);
 
-        // Section 5: Suggested threshold 50-70px
-        const SWIPE_THRESHOLD = 55;
+        // Check if gesture is an intentional vertical swipe (at least 50px, predominantly vertical)
+        if (absDeltaY < SWIPE_THRESHOLD || absDeltaY <= absDeltaX * 1.25) {
+            return;
+        }
 
-        // Must be predominantly vertical
-        if (absDeltaY >= SWIPE_THRESHOLD && absDeltaY > absDeltaX * 1.25) {
-            // Section 6 & 13: Preserve native scrolling within scrollable content
-            if (touchStartScrollEl) {
-                const maxScroll = touchStartScrollEl.scrollHeight - touchStartScrollEl.clientHeight;
-                if (deltaY > 0) {
-                    // Upward swipe -> next section.
-                    // If container had room to scroll down natively, do NOT navigate.
-                    if (touchStartScrollTop < maxScroll - 12) {
-                        return;
-                    }
-                } else {
-                    // Downward swipe -> previous section.
-                    // If container had room to scroll up natively, do NOT navigate.
-                    if (touchStartScrollTop > 12) {
-                        return;
-                    }
-                }
-            }
-
-            // Intentional vertical section swipe
+        // Swiping directly on the navigation clock always triggers section navigation
+        if (touchIsClock) {
             if (deltaY > 0) {
-                // Swipe UP -> NEXT SECTION
                 nextSection();
             } else {
-                // Swipe DOWN -> PREVIOUS SECTION
+                prevSection();
+            }
+            return;
+        }
+
+        // Swiping on content: apply MOBILE SECTION SCROLL LOCK rules
+        const activePanel = activePanelAtTouchStart || document.querySelector('.content-section-panel.active');
+        if (!activePanel) return;
+
+        const currentScrollTop = activePanel.scrollTop;
+        const currentClientHeight = activePanel.clientHeight;
+        const currentScrollHeight = activePanel.scrollHeight;
+        const isCurrentlyScrollable = (currentScrollHeight > currentClientHeight + EDGE_THRESHOLD);
+        const isCurrentlyAtBottom = isCurrentlyScrollable
+            ? (currentScrollTop + currentClientHeight >= currentScrollHeight - EDGE_THRESHOLD)
+            : true;
+        const isCurrentlyAtTop = isCurrentlyScrollable
+            ? (currentScrollTop <= EDGE_THRESHOLD)
+            : true;
+
+        if (deltaY > 0) {
+            // USER SWIPED UP (Attempting to scroll content down or advance to NEXT section)
+            // Rule: Scrolling inside a section never changes the section.
+            // If gesture started before reaching the bottom, allow normal scrolling and do NOT change section!
+            if (!touchStartIsAtBottom) {
+                return;
+            }
+
+            // Only after reaching the bottom boundary, an additional intentional upward swipe advances
+            if (isCurrentlyAtBottom) {
+                nextSection();
+            }
+        } else {
+            // USER SWIPED DOWN (Attempting to scroll content up or return to PREVIOUS section)
+            // Rule: If gesture started before reaching the top, allow normal scrolling and do NOT change section!
+            if (!touchStartIsAtTop) {
+                return;
+            }
+
+            // Only after reaching the top boundary, an additional intentional downward swipe returns
+            if (isCurrentlyAtTop) {
                 prevSection();
             }
         }
@@ -556,11 +620,11 @@
                 break;
             case 'Home':
                 e.preventDefault();
-                goToSection(0);
+                goToSection(0, false);
                 break;
             case 'End':
                 e.preventDefault();
-                goToSection(TOTAL_SECTIONS - 1);
+                goToSection(TOTAL_SECTIONS - 1, false);
                 break;
         }
     }
@@ -583,7 +647,7 @@
         buildNavClockNodes();
         buildJumpDots();
 
-        // Mobile touch indicator text update
+        // Update indicator text for touch devices
         const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
         const guidanceTextEl = document.querySelector('.guidance-text');
         if (guidanceTextEl && isTouchDevice) {
@@ -596,11 +660,12 @@
                 e.preventDefault();
                 const targetIdx = parseInt(btn.dataset.jumpTo, 10);
                 if (!isNaN(targetIdx)) {
-                    goToSection(targetIdx);
+                    goToSection(targetIdx, false);
                 }
             });
         });
 
+        // Use passive touch listeners so native momentum scroll is 100% smooth and non-blocking
         window.addEventListener('wheel', handleWheel, { passive: false });
         window.addEventListener('touchstart', handleTouchStart, { passive: true });
         window.addEventListener('touchend', handleTouchEnd, { passive: true });
@@ -621,7 +686,7 @@
         });
 
         // Initialize active section 0 (HOME)
-        goToSection(0);
+        goToSection(0, false);
     }
 
     window.ClockNav = {
