@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>NITHIN R</title>
+    <meta name="description" content="Personal portfolio of Nithin R — Computer Science Engineering student and Web Developer. Futuristic dual-clock navigation interface exploring projects, skills, certifications, and experience.">
+    <meta name="keywords" content="Nithin R, Web Developer, Computer Science Engineer, Java, Python, JavaScript, Machine Learning, Dual Clock Portfolio, Dev Tracker">
+    <meta name="author" content="Nithin R">
+    <meta name="theme-color" content="#00ff66">
+    <meta property="og:title" content="NITHIN R">
+    <meta property="og:description" content="Computer Science Engineer & Web Developer. Interactive dual-clock interface built for engineering and problem solving.">
+    <meta property="og:type" content="website">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%23050706' stroke='%2300ff66' stroke-width='4'/><polygon points='50,16 68,50 50,84 32,50' fill='%2300ff66'/><circle cx='50' cy='50' r='8' fill='%23050706'/></svg>">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="loading-state">
+
+    <div id="system-loader" class="loader-container" role="dialog" aria-modal="true" aria-label="System Initializing">
+        <div class="loader-stage">
+
+            <div class="loader-ambient-glow" aria-hidden="true"></div>
+
+            <div class="device-core" id="device-core">
+
+                <div class="device-bezel">
+                    <svg class="bezel-svg" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="94" class="ring-track" />
+                        <circle cx="100" cy="100" r="94" class="ring-arc" />
+                        <circle cx="100" cy="100" r="82" class="ring-ticks" />
+                    </svg>
+                </div>
+
+                <div class="device-circle" id="device-circle">
+                    <div class="quadrant-display"></div>
+                    <div class="aperture-center-hub">
+                        <div class="core-pulse-node"></div>
+                    </div>
+                </div>
+
+                <div class="device-energy-rings">
+                    <div class="energy-wave wave-1"></div>
+                    <div class="energy-wave wave-2"></div>
+                </div>
+            </div>
+
+            <div class="loader-hologram" id="loader-hologram">
+                <div class="hollow-title-container">
+                    <h1 class="holo-title-hollow mono" id="holo-title">SYSTEM ACTIVATED</h1>
+                    <div class="hollow-laser-line" aria-hidden="true"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cursor-tracker" class="cursor-tracker" aria-hidden="true">
+        <div class="cursor-dot"></div>
+        <div class="cursor-ring"></div>
+    </div>
+
+    <header class="system-hud-header" role="banner">
+        <div class="hud-left">
+            <div class="system-brand">
+                <span class="brand-glyph" aria-hidden="true">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </span>
+                <span class="brand-text mono">NITHIN R</span>
+            </div>
+            <div class="system-status-chip mono">
+                <span class="live-dot"></span>
+                <span class="chip-text">ONLINE</span>
+            </div>
+        </div>
+
+        <div class="hud-center">
+            <div class="hud-nav-summary mono" id="hud-section-summary">
+                <span class="summary-index" id="hud-sec-code">01</span>
+                <span class="summary-sep">/</span>
+                <span class="summary-total">09</span>
+                <span class="summary-name" id="hud-sec-name">HOME</span>
+            </div>
+        </div>
+
+        <div class="hud-right">
+            <button class="audio-toggle-btn mono" id="audio-toggle" aria-label="Toggle interface audio feedback" title="Toggle audio feedback">
+                <span class="audio-icon" aria-hidden="true">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <line x1="23" y1="9" x2="17" y2="15"></line>
+                        <line x1="17" y1="9" x2="23" y2="15"></line>
+                    </svg>
+                </span>
+                <span class="audio-label" id="audio-label">AUDIO: OFF</span>
+            </button>
+
+            <a href="assets/resume/Nithin_R_Web_Developer_Resume.pdf" download class="hud-resume-btn mono" aria-label="Download Nithin R Resume">
+                <span class="btn-glyph" aria-hidden="true">&#8615;</span>
+                <span>RESUME</span>
+            </a>
+        </div>
+    </header>
+
+    <main class="dual-clock-container" id="dual-clock-app">
+
+        <aside class="clock-nav-column" aria-label="Portfolio Navigation Clock">
+            <div class="clock-wrapper">
+                <div class="clock-panel-label mono">
+                    <span class="label-tech">ROT.AZIMUTH</span>
+                    <span class="label-title">WHERE AM I?</span>
+                </div>
+
+                <div class="nav-clock-housing" id="nav-clock-housing">
+
+                    <div class="clock-bezel static-bezel" aria-hidden="true">
+                        <svg class="bezel-ticks-svg" viewBox="0 0 340 340">
+
+                            <circle cx="170" cy="170" r="164" class="bezel-outer-ring"/>
+                            <circle cx="170" cy="170" r="150" class="bezel-track-ring"/>
+                            <circle cx="170" cy="170" r="136" class="bezel-inner-ring"/>
+
+                            <line x1="170" y1="6" x2="170" y2="20" class="bezel-cardinal primary" />
+                            <line x1="334" y1="170" x2="320" y2="170" class="bezel-cardinal" />
+                            <line x1="170" y1="334" x2="170" y2="320" class="bezel-cardinal" />
+                            <line x1="6" y1="170" x2="20" y2="170" class="bezel-cardinal" />
+
+                            <g class="clock-degree-ticks"></g>
+                        </svg>
+
+                        <div class="fixed-3oclock-marker" id="fixed-3oclock-marker" aria-hidden="true">
+                            <div class="marker-caliper-notch"></div>
+                            <div class="marker-alignment-line"></div>
+                            <div class="marker-led-node"></div>
+                            <div class="marker-instrument-tag mono">
+                                <span class="tag-arrow">&#9664;</span>
+                                <span class="tag-coord">ACTIVE | 3H</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav-clock-rotor" id="nav-clock-rotor" role="navigation" aria-label="Section selector dial">
+
+                        <svg class="rotor-orbital-svg" viewBox="0 0 340 340" aria-hidden="true">
+                            <circle cx="170" cy="170" r="114" class="rotor-orbital-path"/>
+                            <circle cx="170" cy="170" r="82" class="rotor-inner-orbital"/>
+                        </svg>
+
+                        <div class="nav-nodes-layer" id="nav-nodes-layer">
+
+                        </div>
+                    </div>
+
+                    <div class="nav-clock-hub" aria-hidden="true">
+                        <div class="hub-inner">
+                            <span class="hub-tag mono">SYSTEM NAV</span>
+                            <span class="hub-name">NITHIN R</span>
+                            <div class="hub-coords mono" id="nav-angle-display">000.0&deg;</div>
+                        </div>
+                        <div class="hub-ring-pulse"></div>
+                    </div>
+                </div>
+
+                <div class="clock-nav-controls mono">
+                    <div class="scroll-guidance">
+                        <span class="key-tag">&#9650;</span>
+                        <span class="key-tag">&#9660;</span>
+                        <span class="guidance-text">SCROLL TO ROTATE</span>
+                    </div>
+                    <div class="section-jump-group" id="nav-jump-dots">
+
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <section class="clock-content-column" aria-label="Portfolio Content Viewport">
+            <div class="content-clock-stage" id="content-clock-stage">
+
+                <div class="content-clock-housing" id="content-clock-housing">
+
+                    <div class="content-clock-rotor" id="content-clock-rotor" aria-hidden="true">
+                        <svg class="content-rotor-svg" viewBox="0 0 900 900">
+
+                            <circle cx="450" cy="450" r="440" class="c-rotor-rim"/>
+                            <circle cx="450" cy="450" r="425" class="c-rotor-dashed"/>
+                            <circle cx="450" cy="450" r="390" class="c-rotor-ticks"/>
+                            <circle cx="450" cy="450" r="330" class="c-rotor-accent-ring"/>
+                            <circle cx="450" cy="450" r="230" class="c-rotor-inner-iris"/>
+
+                            <g class="c-rotor-radials" id="c-rotor-radials"></g>
+                        </svg>
+                        <div class="rotor-ambient-mesh"></div>
+                    </div>
+
+                    <div class="content-clock-vignette" aria-hidden="true"></div>
+
+                    <div class="content-clock-center-hub" id="content-clock-center-hub">
+                        <div class="c-hub-container">
+                            <div class="c-hub-code mono" id="center-sec-code">01 / 09</div>
+                            <h2 class="c-hub-title" id="center-sec-title">HOME</h2>
+                            <div class="c-hub-subtitle mono" id="center-sec-subtitle">SYSTEM INITIALIZED</div>
+                        </div>
+                    </div>
+
+                    <div class="content-clock-viewport" id="content-clock-viewport">
+
+                        <article class="content-section-panel active" id="panel-home" data-section-index="0" aria-label="Home Overview">
+                            <div class="panel-inner panel-home-layout">
+                                <div class="home-identity-frame">
+                                    <div class="home-avatar-aperture">
+                                        <div class="avatar-ring-outer"></div>
+                                        <div class="avatar-ring-rotating"></div>
+                                        <div class="avatar-img-wrap">
+                                            <img src="assets/profile/nithin-profile.png" alt="Nithin R — Web Developer & Computer Science Engineer" class="avatar-img" width="220" height="220" loading="eager">
+                                        </div>
+                                        <div class="avatar-badge mono">&lt;DEVELOPER /&gt;</div>
+                                    </div>
+
+                                    <div class="home-text-dossier">
+                                        <div class="home-kicker mono"><span class="accent-text">&gt;</span> SYSTEM ACTIVE | INTRODUCING</div>
+                                        <h3 class="home-headline">NITHIN R</h3>
+                                        <div class="home-role mono">
+                                            <span class="role-primary">Web Developer</span>
+                                            <span class="role-sep">·</span>
+                                            <span class="role-sec">Computer Science Engineering Student</span>
+                                        </div>
+                                        <p class="home-credo">
+                                            "I write code that solves real problems."
+                                        </p>
+                                        <p class="home-bio-summary">
+                                            Engineering functional web applications and machine learning integrations with Java, Python, and JavaScript. Focused on clean architectures, database precision, and practical execution.
+                                        </p>
+
+                                        <div class="home-telemetry-strip mono">
+                                            <div class="telemetry-node">
+                                                <span class="t-label">INSTITUTION</span>
+                                                <span class="t-val">MPNMJ Eng. College</span>
+                                            </div>
+                                            <div class="telemetry-node">
+                                                <span class="t-label">CGPA</span>
+                                                <span class="t-val accent-text">8.19 / 10</span>
+                                            </div>
+                                            <div class="telemetry-node">
+                                                <span class="t-label">LOCATION</span>
+                                                <span class="t-val">Tiruppur, India</span>
+                                            </div>
+                                            <div class="telemetry-node">
+                                                <span class="t-label">STATUS</span>
+                                                <span class="t-val accent-text">Available</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="home-action-cluster">
+                                            <button class="action-btn primary-action" data-jump-to="3">
+                                                <span>EXPLORE PROJECTS</span>
+                                                <span class="action-arrow">&rarr;</span>
+                                            </button>
+                                            <button class="action-btn secondary-action" data-jump-to="8">
+                                                <span>TRANSMIT MESSAGE</span>
+                                            </button>
+                                            <a href="assets/resume/Nithin_R_Web_Developer_Resume.pdf" download class="action-btn outline-action">
+                                                <span>DOWNLOAD RESUME</span>
+                                                <span class="dl-icon">&#8615;</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-about" data-section-index="1" aria-label="About Nithin">
+                            <div class="panel-inner panel-about-layout">
+                                <div class="about-dossier-grid">
+                                    <div class="about-narrative-card">
+                                        <div class="card-tech-header mono">
+                                            <span class="accent-text">| 02.01</span>
+                                            <span>BIOGRAPHICAL DATA</span>
+                                        </div>
+                                        <p class="about-lead-text">
+                                            I'm Nithin — a Computer Science Engineering student passionate about transforming theoretical computational concepts into functional, reliable software.
+                                        </p>
+                                        <p class="about-body-text">
+                                            I work primarily with <strong class="accent-text">Java</strong>, <strong class="accent-text">Python</strong>, and <strong class="accent-text">JavaScript</strong>. My engineering journey centers on building real-world projects from scratch, understanding database transaction integrity, and experimenting with applied machine learning.
+                                        </p>
+                                        <p class="about-body-text">
+                                            Currently advancing my Bachelor of Engineering degree at M.P. Nachimuthu M. Jaganathan Engineering College with an academic standing of <span class="accent-text font-bold">8.19 / 10 CGPA</span>, targeted for completion in 2027.
+                                        </p>
+                                    </div>
+
+                                    <div class="about-matrix-card">
+                                        <div class="card-tech-header mono">
+                                            <span class="accent-text">| 02.02</span>
+                                            <span>ENGINEERING TELEMETRY</span>
+                                        </div>
+                                        <div class="matrix-fields-list mono">
+                                            <div class="matrix-row">
+                                                <span class="m-key">CANDIDATE</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val highlight">Nithin R</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">DISCIPLINE</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val">B.E. Computer Science & Eng.</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">ACADEMIC CGPA</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val accent-text">8.19 / 10</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">GRADUATION</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val">2027</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">BASE LOCATION</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val">Tiruppur, Tamil Nadu, India</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">LANGUAGES</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val">Tamil (Native) · English (Fluent)</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">CORE STACK</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val accent-text">Java · Python · JS · MySQL</span>
+                                            </div>
+                                            <div class="matrix-row">
+                                                <span class="m-key">ENGAGEMENT</span>
+                                                <span class="m-dots"></span>
+                                                <span class="m-val status-live">Open to Opportunities</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-skills" data-section-index="2" aria-label="Technical Skills Matrix">
+                            <div class="panel-inner panel-skills-layout">
+                                <div class="skills-filter-bar mono">
+                                    <span class="filter-lead">CLUSTER FILTER:</span>
+                                    <button class="skill-tab active" data-skill-cat="all">ALL [09]</button>
+                                    <button class="skill-tab" data-skill-cat="prog">PROGRAMMING</button>
+                                    <button class="skill-tab" data-skill-cat="web">WEB</button>
+                                    <button class="skill-tab" data-skill-cat="data">DATABASE</button>
+                                    <button class="skill-tab" data-skill-cat="tools">TOOLS</button>
+                                    <button class="skill-tab" data-skill-cat="concepts">CONCEPTS</button>
+                                </div>
+
+                                <div class="skills-orbital-constellation" id="skills-constellation">
+
+                                    <div class="skill-node-card" data-category="prog">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">LANG | 01</span>
+                                            <span class="node-cat mono">PROGRAMMING</span>
+                                        </div>
+                                        <h4 class="node-title">Java</h4>
+                                        <p class="node-desc">Core Java, Object-Oriented Architecture, JDBC connectivity, GUI & enterprise logic.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Salary Mgmt System</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="prog">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">LANG | 02</span>
+                                            <span class="node-cat mono">PROGRAMMING</span>
+                                        </div>
+                                        <h4 class="node-title">Python</h4>
+                                        <p class="node-desc">Application scripting, Streamlit UI, Scikit-learn ML pipelines, Pandas analytics.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">SQLi Defense Project</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="prog">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">LANG | 03</span>
+                                            <span class="node-cat mono">PROGRAMMING</span>
+                                        </div>
+                                        <h4 class="node-title">C</h4>
+                                        <p class="node-desc">Foundational programming, pointer logic, algorithms, memory structuring.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">CS Core Foundations</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="web">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">WEB | 01</span>
+                                            <span class="node-cat mono">WEB ARCHITECTURE</span>
+                                        </div>
+                                        <h4 class="node-title">HTML5 & CSS3</h4>
+                                        <p class="node-desc">Semantic document design, responsive layouts, custom CSS animations, modern styling.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Dual-Clock UI</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="web">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">WEB | 02</span>
+                                            <span class="node-cat mono">WEB ARCHITECTURE</span>
+                                        </div>
+                                        <h4 class="node-title">JavaScript</h4>
+                                        <p class="node-desc">Modern ES6+, DOM manipulation, asynchronous state, Web Audio API, interactive mechanics.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Interactive Engines</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="data">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">DB | 01</span>
+                                            <span class="node-cat mono">DATABASE</span>
+                                        </div>
+                                        <h4 class="node-title">MySQL / SQL</h4>
+                                        <p class="node-desc">Relational schemas, query optimization, CRUD operations, transactions, JDBC integration.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Database Projects</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="tools">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">TOOL | 01</span>
+                                            <span class="node-cat mono">VERSION CONTROL</span>
+                                        </div>
+                                        <h4 class="node-title">Git & GitHub</h4>
+                                        <p class="node-desc">Repository lifecycle, branch workflows, collaborative tracking, commit versioning.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">github.com/nithin-53</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="concepts">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">THEORY | 01</span>
+                                            <span class="node-cat mono">PARADIGMS</span>
+                                        </div>
+                                        <h4 class="node-title">OOP</h4>
+                                        <p class="node-desc">Encapsulation, Inheritance, Polymorphism, Abstraction, modular architecture design.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Software Design</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="skill-node-card" data-category="concepts">
+                                        <div class="node-icon-header">
+                                            <span class="node-badge mono">THEORY | 02</span>
+                                            <span class="node-cat mono">MACHINE LEARNING</span>
+                                        </div>
+                                        <h4 class="node-title">Machine Learning</h4>
+                                        <p class="node-desc">Classification, TF-IDF vectorization, Random Forest classifiers, predictive modeling.</p>
+                                        <div class="node-footer mono">
+                                            <span class="node-app-tag">Security & Agrotech</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-projects" data-section-index="3" aria-label="Featured Software Projects">
+                            <div class="panel-inner panel-projects-layout">
+
+                                <div class="project-orbit-switcher mono">
+                                    <button class="proj-tab-btn active" data-proj-target="proj-01">
+                                        <span class="tab-index">01</span>
+                                        <span class="tab-name">SALARY MANAGEMENT SYSTEM</span>
+                                    </button>
+                                    <button class="proj-tab-btn" data-proj-target="proj-02">
+                                        <span class="tab-index">02</span>
+                                        <span class="tab-name">SECURE DB (SQLI ML DEFENDER)</span>
+                                        <span class="tab-badge">FEATURED</span>
+                                    </button>
+                                </div>
+
+                                <div class="project-viewport-stage">
+
+                                    <div class="project-display-card active" id="proj-01">
+                                        <div class="proj-telemetry-header">
+                                            <div class="proj-meta-left mono">
+                                                <span class="proj-code accent-text">PROJECT | 01</span>
+                                                <span class="proj-stack-chips">JAVA · JDBC · MYSQL</span>
+                                            </div>
+                                            <a href="https://github.com/nithin-53/Salary_management_System" target="_blank" rel="noopener noreferrer" class="proj-repo-link mono">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                                                </svg>
+                                                <span>GITHUB REPO &rarr;</span>
+                                            </a>
+                                        </div>
+
+                                        <h3 class="proj-title">Salary Management System</h3>
+                                        <p class="proj-summary">
+                                            Enterprise Java salary management architecture integrated with MySQL using JDBC. Facilitates full employee lifecycle management with CRUD operations, automated payroll computations including Basic, HRA, DA, bonuses, deductions, database-backed reporting, and authentication.
+                                        </p>
+
+                                        <div class="proj-simulated-terminal">
+                                            <div class="terminal-bar mono">
+                                                <div class="term-dots">
+                                                    <span class="dot-red"></span><span class="dot-amber"></span><span class="dot-green"></span>
+                                                </div>
+                                                <span class="term-file">SalaryManager.java | JDBC Active Connection</span>
+                                                <span class="term-status-pill">QUERY OK</span>
+                                            </div>
+                                            <div class="terminal-table-wrap">
+                                                <table class="sim-table mono">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>EMP_ID</th>
+                                                            <th>EMPLOYEE</th>
+                                                            <th>BASIC</th>
+                                                            <th>HRA</th>
+                                                            <th>DA</th>
+                                                            <th>TOTAL</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td class="accent-text">1001</td>
+                                                            <td>Arun K</td>
+                                                            <td>₹25,000</td>
+                                                            <td>₹5,000</td>
+                                                            <td>₹3,200</td>
+                                                            <td class="accent-text">₹35,200</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="accent-text">1002</td>
+                                                            <td>Priya S</td>
+                                                            <td>₹30,000</td>
+                                                            <td>₹6,000</td>
+                                                            <td>₹4,400</td>
+                                                            <td class="accent-text">₹42,400</td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="accent-text">1003</td>
+                                                            <td>Ravi M</td>
+                                                            <td>₹28,000</td>
+                                                            <td>₹5,600</td>
+                                                            <td>₹3,800</td>
+                                                            <td class="accent-text">₹38,800</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="term-footer mono">
+                                                <span class="accent-text">&#9679;</span> MySQL Database Connected &nbsp;|&nbsp; 3 records retrieved &nbsp;|&nbsp; Transaction status: COMMITTED
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="project-display-card" id="proj-02">
+                                        <div class="proj-telemetry-header">
+                                            <div class="proj-meta-left mono">
+                                                <span class="proj-code accent-text">PROJECT | 02</span>
+                                                <span class="proj-stack-chips">PYTHON · STREAMLIT · SCIKIT-LEARN · MYSQL · RANDOM FOREST</span>
+                                            </div>
+                                            <a href="https://github.com/nithin-53/sqliproject" target="_blank" rel="noopener noreferrer" class="proj-repo-link mono">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                                                </svg>
+                                                <span>GITHUB REPO &rarr;</span>
+                                            </a>
+                                        </div>
+
+                                        <h3 class="proj-title">Secure Database Management System</h3>
+                                        <p class="proj-summary">
+                                            Python & Streamlit web security platform with MySQL database interaction and real-time query monitoring. Implements SQL injection detection through rule/signature checks coupled with a machine learning classification pipeline using TF-IDF feature extraction and Random Forest classifier. Includes user authentication, attack anomaly logger, query history audit, and real-time dashboard.
+                                        </p>
+
+                                        <div class="proj-simulated-terminal">
+                                            <div class="terminal-bar mono">
+                                                <div class="term-dots">
+                                                    <span class="dot-red"></span><span class="dot-amber"></span><span class="dot-green"></span>
+                                                </div>
+                                                <span class="term-file">secure_db_monitor.py | Real-Time Anomaly Engine</span>
+                                                <span class="term-status-pill secure">FIREWALL ACTIVE</span>
+                                            </div>
+                                            <div class="threat-logs-list mono">
+                                                <div class="log-entry safe">
+                                                    <span class="log-badge-safe">[VALID]</span>
+                                                    <span class="log-query">SELECT * FROM users WHERE id=1</span>
+                                                    <span class="log-verdict">SAFE (CLEAN)</span>
+                                                </div>
+                                                <div class="log-entry threat">
+                                                    <span class="log-badge-threat">[THREAT]</span>
+                                                    <span class="log-query">DROP TABLE users; --</span>
+                                                    <span class="log-verdict">SQLI DETECTED & BLOCKED</span>
+                                                </div>
+                                                <div class="log-entry safe">
+                                                    <span class="log-badge-safe">[VALID]</span>
+                                                    <span class="log-query">SELECT name FROM employees WHERE dept='IT'</span>
+                                                    <span class="log-verdict">SAFE (CLEAN)</span>
+                                                </div>
+                                                <div class="log-entry threat">
+                                                    <span class="log-badge-threat">[THREAT]</span>
+                                                    <span class="log-query">1' OR '1'='1</span>
+                                                    <span class="log-verdict">ATTACK INTERCEPTED & LOGGED</span>
+                                                </div>
+                                            </div>
+                                            <div class="term-footer mono">
+                                                <span class="accent-text">&#9679;</span> Pipeline: TF-IDF Vectorizer + Random Forest Classifier &nbsp;|&nbsp; Streamlit Dashboard Active
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-experience" data-section-index="4" aria-label="Professional Experience">
+                            <div class="panel-inner panel-experience-layout">
+                                <div class="experience-orbital-card">
+                                    <div class="exp-marker-badge mono">
+                                        <span class="accent-text">| INDUSTRY MILESTONE</span>
+                                        <span class="exp-duration">JULY 2026 &mdash; AUGUST 2026</span>
+                                    </div>
+
+                                    <div class="exp-core-info">
+                                        <div class="exp-company-block">
+                                            <h3 class="exp-role">Machine Learning Intern</h3>
+                                            <h4 class="exp-company">EMGLITZ Technologies</h4>
+                                            <span class="exp-tenure mono">02 July 2026 &mdash; 06 August 2026</span>
+                                        </div>
+
+                                        <div class="exp-project-box">
+                                            <div class="box-tag mono"><span class="accent-text">&gt;</span> ASSIGNED INITIATIVE</div>
+                                            <div class="box-title">Soil Moisture Based Irrigation Technique</div>
+                                            <p class="box-desc">
+                                                Researched and implemented machine learning methodologies for soil moisture evaluation and automated irrigation triggering, utilizing Python and sensor data modeling to maximize water conservation in agro-technical settings.
+                                            </p>
+                                        </div>
+
+                                        <div class="exp-tech-chips mono">
+                                            <span class="t-chip">Machine Learning</span>
+                                            <span class="t-chip">Python</span>
+                                            <span class="t-chip">Data Modeling</span>
+                                            <span class="t-chip">Sensor Analytics</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-education" data-section-index="5" aria-label="Academic Timeline">
+                            <div class="panel-inner panel-education-layout">
+                                <div class="edu-orbital-timeline">
+
+                                    <div class="edu-card active">
+                                        <div class="edu-card-marker mono">
+                                            <span class="marker-dot"></span>
+                                            <span class="marker-year">2023 &mdash; 2027</span>
+                                            <span class="marker-status accent-text">[CURRENT]</span>
+                                        </div>
+                                        <div class="edu-card-body">
+                                            <h3 class="edu-title">B.E. — Computer Science and Engineering</h3>
+                                            <p class="edu-institution">M.P. Nachimuthu M. Jaganathan Engineering College</p>
+                                            <div class="edu-metrics mono">
+                                                <span class="metric-item">CGPA: <strong class="accent-text">8.19 / 10</strong></span>
+                                                <span class="metric-item">Status: In Progress</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="edu-card">
+                                        <div class="edu-card-marker mono">
+                                            <span class="marker-dot"></span>
+                                            <span class="marker-year">2023</span>
+                                            <span class="marker-status">[COMPLETED]</span>
+                                        </div>
+                                        <div class="edu-card-body">
+                                            <h3 class="edu-title">Higher Secondary Certificate (Class XII)</h3>
+                                            <p class="edu-institution">Government Higher Secondary School, Velliraveli</p>
+                                            <div class="edu-metrics mono">
+                                                <span class="metric-item">Percentage: <strong class="accent-text">74%</strong></span>
+                                                <span class="metric-item">State Board</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="edu-card">
+                                        <div class="edu-card-marker mono">
+                                            <span class="marker-dot"></span>
+                                            <span class="marker-year">2021</span>
+                                            <span class="marker-status">[COMPLETED]</span>
+                                        </div>
+                                        <div class="edu-card-body">
+                                            <h3 class="edu-title">Secondary School Leaving Certificate (Class X)</h3>
+                                            <p class="edu-institution">Government Higher Secondary School, Velliraveli</p>
+                                            <div class="edu-metrics mono">
+                                                <span class="metric-item">Result: <strong class="accent-text">Pass</strong></span>
+                                                <span class="metric-item">State Board</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-certifications" data-section-index="6" aria-label="Verified Certifications">
+                            <div class="panel-inner panel-certifications-layout">
+                                <div class="certs-grid">
+
+                                    <div class="cert-orbital-card">
+                                        <div class="cert-preview-frame" data-cert-src="assets/certificates/emglitz-project-completion.png" data-cert-title="Machine Learning Internship — EMGLITZ Technologies">
+                                            <img src="assets/certificates/emglitz-project-completion.png" alt="EMGLITZ Technologies Internship Certificate" loading="lazy" class="cert-thumbnail">
+                                            <div class="cert-zoom-overlay">
+                                                <span class="zoom-icon mono">&#8981; VIEW CREDENTIAL</span>
+                                            </div>
+                                        </div>
+                                        <div class="cert-meta-block">
+                                            <div class="cert-badge mono">INTERNSHIP CREDENTIAL</div>
+                                            <h3 class="cert-name">Machine Learning Internship</h3>
+                                            <div class="cert-issuer mono">EMGLITZ Technologies</div>
+                                            <div class="cert-dates mono">02 July 2026 &mdash; 06 August 2026</div>
+                                            <p class="cert-subdetail mono"><span class="accent-text">&gt;</span> Soil Moisture Based Irrigation Technique</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="cert-orbital-card">
+                                        <div class="cert-preview-frame" data-cert-src="assets/certificates/be10x-ai-tools-workshop.png" data-cert-title="AI Tools & ChatGPT Workshop — be10x">
+                                            <img src="assets/certificates/be10x-ai-tools-workshop.png" alt="be10x AI Tools & ChatGPT Workshop Certificate" loading="lazy" class="cert-thumbnail">
+                                            <div class="cert-zoom-overlay">
+                                                <span class="zoom-icon mono">&#8981; VIEW CREDENTIAL</span>
+                                            </div>
+                                        </div>
+                                        <div class="cert-meta-block">
+                                            <div class="cert-badge mono">WORKSHOP CREDENTIAL</div>
+                                            <h3 class="cert-name">AI Tools & ChatGPT Workshop</h3>
+                                            <div class="cert-issuer mono">be10x</div>
+                                            <div class="cert-dates mono">12 July 2026</div>
+                                            <p class="cert-subdetail mono"><span class="accent-text">&gt;</span> Applied AI, Automation & Prompt Engineering</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-achievements" data-section-index="7" aria-label="Key Achievements">
+                            <div class="panel-inner panel-achievements-layout">
+                                <div class="achievement-orbital-milestone">
+                                    <div class="milestone-icon-hub" aria-hidden="true">
+                                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                        </svg>
+                                    </div>
+                                    <div class="milestone-data">
+                                        <div class="m-kicker mono"><span class="accent-text">| RESEARCH & PRESENTATION</span></div>
+                                        <h3 class="milestone-headline">Paper Presentation</h3>
+                                        <div class="milestone-topic">
+                                            <span class="topic-label mono">TOPIC:</span>
+                                            <span class="topic-value">"Smart Home"</span>
+                                        </div>
+                                        <div class="milestone-venue mono">
+                                            <span class="accent-text">&gt;</span> VENUE: Kangeyam Institute of Technology
+                                        </div>
+                                        <p class="milestone-narrative">
+                                            Presented architectural concepts, IoT integration protocols, and automation architectures for intelligent modern residential systems at the state-level technical symposium.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="content-section-panel" id="panel-contact" data-section-index="8" aria-label="Contact Interface">
+                            <div class="panel-inner panel-contact-layout">
+                                <div class="contact-terminal-grid">
+
+                                    <div class="contact-telemetry-col">
+                                        <div class="c-kicker mono"><span class="accent-text">&gt;</span> FINAL SYSTEM STATE</div>
+                                        <h3 class="contact-statement">LET'S BUILD SOMETHING.</h3>
+                                        <p class="contact-invitation">
+                                            Open to engineering discussions, web development projects, and software internships. Dispatch a message or connect through verified channels.
+                                        </p>
+
+                                        <div class="contact-nodes-list mono">
+                                            <a href="mailto:r.nithinthedeveloper@gmail.com" class="c-channel-link">
+                                                <span class="c-icon" aria-hidden="true">&#9993;</span>
+                                                <span class="c-text">r.nithinthedeveloper@gmail.com</span>
+                                            </a>
+                                            <a href="https://github.com/nithin-53" target="_blank" rel="noopener noreferrer" class="c-channel-link">
+                                                <span class="c-icon" aria-hidden="true">&#9655;</span>
+                                                <span class="c-text">github.com/nithin-53</span>
+                                            </a>
+                                            <a href="https://www.linkedin.com/in/-nithin-the-developer" target="_blank" rel="noopener noreferrer" class="c-channel-link">
+                                                <span class="c-icon" aria-hidden="true">&#10065;</span>
+                                                <span class="c-text">linkedin.com/in/-nithin-the-developer</span>
+                                            </a>
+                                            <a href="tel:+916381010889" class="c-channel-link">
+                                                <span class="c-icon" aria-hidden="true">&#9742;</span>
+                                                <span class="c-text">+91 6381010889</span>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="contact-form-col">
+                                        <form class="transmission-form" id="transmission-form" novalidate>
+                                            <div class="form-header-bar mono">
+                                                <span class="accent-text">| MESSAGE PACKET DISPATCHER</span>
+                                            </div>
+
+                                            <div class="input-field-group">
+                                                <label for="sender-name" class="field-label mono">NAME | IDENTITY</label>
+                                                <input type="text" id="sender-name" name="name" class="hud-input" placeholder="Your name / organization" required autocomplete="name">
+                                                <span class="field-error mono" id="name-error">Please enter your name</span>
+                                            </div>
+
+                                            <div class="input-field-group">
+                                                <label for="sender-email" class="field-label mono">EMAIL | RETURN ADDRESS</label>
+                                                <input type="email" id="sender-email" name="email" class="hud-input" placeholder="name@domain.com" required autocomplete="email">
+                                                <span class="field-error mono" id="email-error">Please enter a valid email</span>
+                                            </div>
+
+                                            <div class="input-field-group">
+                                                <label for="sender-message" class="field-label mono">PAYLOAD | MESSAGE</label>
+                                                <textarea id="sender-message" name="message" rows="4" class="hud-input hud-textarea" placeholder="Discuss project, role or inquiry..." required></textarea>
+                                                <span class="field-error mono" id="message-error">Please enter message payload</span>
+                                            </div>
+
+                                            <button type="submit" class="submit-packet-btn mono" id="submit-packet-btn">
+                                                <span class="btn-text">TRANSMIT PACKET &rarr;</span>
+                                                <span class="btn-spinner" aria-hidden="true"></span>
+                                            </button>
+
+                                            <div class="form-status-feed mono" id="form-status-feed" aria-live="polite"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="system-hud-footer mono" role="contentinfo">
+        <div class="footer-left">
+            <span class="footer-nav-help">
+                <span class="key-pill">&uarr;</span>
+                <span class="key-pill">&darr;</span>
+                <span>KEYS / WHEEL TO NAVIGATE</span>
+            </span>
+        </div>
+        <div class="footer-center">
+            <span class="accent-text">&copy; 2026 NITHIN R</span>
+            <span class="footer-dim">· DUAL CLOCK INTERFACE · TIRUPPUR, INDIA</span>
+        </div>
+        <div class="footer-right">
+            <a href="https://github.com/nithin-53" target="_blank" rel="noopener noreferrer" class="footer-social-link">GITHUB</a>
+            <span class="footer-sep">/</span>
+            <a href="https://www.linkedin.com/in/-nithin-the-developer" target="_blank" rel="noopener noreferrer" class="footer-social-link">LINKEDIN</a>
+            <span class="footer-sep">/</span>
+            <a href="mailto:r.nithinthedeveloper@gmail.com" class="footer-social-link">EMAIL</a>
+        </div>
+    </footer>
+
+    <div class="cert-modal-lightbox" id="cert-lightbox" role="dialog" aria-modal="true" aria-label="Certificate Inspector" aria-hidden="true">
+        <div class="modal-backdrop" id="modal-backdrop"></div>
+        <div class="modal-chassis">
+            <div class="modal-top-bar mono">
+                <span class="modal-title" id="modal-cert-title">CERTIFICATE VERIFICATION</span>
+                <button class="modal-close-btn" id="modal-close" aria-label="Close certificate inspector">&times;</button>
+            </div>
+            <div class="modal-body">
+                <img src="" alt="Verified Certificate" class="modal-cert-image" id="modal-cert-img">
+            </div>
+            <div class="modal-bottom-bar mono">
+                <span class="accent-text">&#9679;</span> VERIFIED ORIGINAL CREDENTIAL
+            </div>
+        </div>
+    </div>
+
+    <script src="js/loader.js"></script>
+    <script src="js/clock-navigation.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

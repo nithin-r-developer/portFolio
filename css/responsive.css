@@ -1,0 +1,414 @@
+@media screen and (max-width: 1200px) {
+    .clock-nav-column {
+        flex: 0 0 290px;
+        min-width: 270px;
+    }
+
+    .nav-clock-housing {
+        width: 280px;
+        height: 280px;
+    }
+
+    .nav-clock-hub {
+        width: 90px;
+        height: 90px;
+    }
+
+    .hub-name {
+        font-size: 12px;
+    }
+
+    .content-clock-housing {
+        width: min(720px, 86vh);
+        height: min(720px, 86vh);
+    }
+
+    .home-avatar-aperture {
+        width: 160px;
+        height: 160px;
+    }
+
+    .avatar-img-wrap {
+        width: 140px;
+        height: 140px;
+    }
+
+    .home-headline {
+        font-size: 32px;
+    }
+
+    .skills-orbital-constellation {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 992px) {
+    html, body {
+        overflow: hidden;
+    }
+
+    .dual-clock-container {
+        flex-direction: column;
+        height: calc(100vh - var(--hud-height) - var(--footer-height));
+    }
+
+    .clock-nav-column {
+        flex: 0 0 170px;
+        max-width: 100%;
+        min-width: 100%;
+        height: 170px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-graphite);
+        padding: 8px 0;
+    }
+
+    .clock-panel-label {
+        display: none;
+    }
+
+    .clock-wrapper {
+        gap: 6px;
+    }
+
+    .nav-clock-housing {
+        width: 140px;
+        height: 140px;
+    }
+
+    .nav-clock-hub {
+        width: 58px;
+        height: 58px;
+    }
+
+    .hub-tag {
+        font-size: 6px;
+    }
+
+    .hub-name {
+        font-size: 9px;
+    }
+
+    .hub-coords {
+        display: none;
+    }
+
+    .nav-node-btn {
+        padding: 2px;
+    }
+
+    .nav-node-marker {
+        width: 8px;
+        height: 8px;
+    }
+
+    .nav-node-dot {
+        width: 3px;
+        height: 3px;
+    }
+
+    .nav-node-code {
+        display: none;
+    }
+
+    .nav-node-label {
+        font-size: 7.5px;
+    }
+
+    .clock-nav-controls {
+        gap: 6px;
+    }
+
+    .scroll-guidance {
+        font-size: 9px;
+    }
+
+    .jump-tick {
+        width: 12px;
+        height: 2.5px;
+    }
+
+    .jump-tick.active {
+        width: 18px;
+    }
+
+    .fixed-3oclock-marker {
+        right: -10px;
+        gap: 4px;
+    }
+
+    .marker-alignment-line {
+        width: 10px;
+    }
+
+    .marker-instrument-tag {
+        font-size: 7.5px;
+        padding: 2px 5px;
+    }
+
+    .clock-content-column {
+        flex: 1 1 auto;
+        height: calc(100% - 170px);
+        width: 100%;
+        padding: 8px 16px;
+    }
+
+    .content-clock-housing {
+        width: 100%;
+        height: 100%;
+    }
+
+    .content-clock-center-hub {
+        top: 6px;
+    }
+
+    .c-hub-container {
+        padding: 4px 14px;
+    }
+
+    .c-hub-title {
+        font-size: 16px;
+    }
+
+    .c-hub-code {
+        font-size: 9px;
+    }
+
+    .content-clock-viewport {
+        width: 100%;
+        height: 100%;
+        padding-top: 44px;
+    }
+
+    .home-identity-frame {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 16px;
+    }
+
+    .home-headline {
+        font-size: 32px;
+    }
+
+    .home-credo {
+        border-left: none;
+        border-top: 2px solid var(--neon-green);
+        padding-left: 0;
+        padding-top: 8px;
+    }
+
+    .home-telemetry-strip {
+        grid-template-columns: repeat(2, 1fr);
+        text-align: left;
+    }
+
+    .home-action-cluster {
+        justify-content: center;
+    }
+
+    .about-dossier-grid {
+        grid-template-columns: 1fr;
+        max-height: 52vh;
+        overflow-y: auto;
+    }
+
+    .skills-orbital-constellation {
+        grid-template-columns: repeat(2, 1fr);
+        max-height: 48vh;
+    }
+
+    .contact-terminal-grid {
+        grid-template-columns: 1fr;
+        max-height: 52vh;
+        overflow-y: auto;
+    }
+
+    .certs-grid {
+        grid-template-columns: 1fr;
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+
+    .cert-preview-frame {
+        height: 140px;
+    }
+}
+
+@media screen and (max-width: 640px) {
+    :root {
+        --hud-height: 50px;
+        --footer-height: 36px;
+    }
+
+    .system-hud-header {
+        padding: 0 14px;
+    }
+
+    .brand-text {
+        font-size: 11px;
+    }
+
+    .system-status-chip {
+        display: none;
+    }
+
+    .hud-nav-summary {
+        padding: 3px 10px;
+        font-size: 10px;
+    }
+
+    .audio-label {
+        display: none;
+    }
+
+    .audio-toggle-btn {
+        padding: 5px 8px;
+    }
+
+    .hud-resume-btn {
+        padding: 5px 10px;
+        font-size: 10px;
+    }
+
+    .system-hud-footer {
+        padding: 0 14px;
+        font-size: 9.5px;
+    }
+
+    .footer-nav-help {
+        display: none;
+    }
+
+    .clock-nav-column {
+        flex: 0 0 145px;
+        height: 145px;
+    }
+
+    .fixed-3oclock-marker {
+        right: -6px;
+        gap: 2px;
+    }
+
+    .marker-alignment-line {
+        width: 6px;
+    }
+
+    .marker-instrument-tag .tag-coord {
+        display: none;
+    }
+
+    .nav-clock-housing {
+        width: 120px;
+        height: 120px;
+    }
+
+    .nav-clock-hub {
+        width: 48px;
+        height: 48px;
+    }
+
+    .hub-name {
+        font-size: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .content-clock-housing {
+        width: 100%;
+        height: 100%;
+    }
+
+    .content-clock-center-hub {
+        top: 2px;
+    }
+
+    .c-hub-title {
+        font-size: 14px;
+    }
+
+    .home-avatar-aperture {
+        width: 110px;
+        height: 110px;
+    }
+
+    .avatar-img-wrap {
+        width: 96px;
+        height: 96px;
+    }
+
+    .avatar-badge {
+        font-size: 7px;
+        padding: 1px 6px;
+    }
+
+    .home-headline {
+        font-size: 24px;
+    }
+
+    .home-role {
+        font-size: 11px;
+    }
+
+    .home-credo {
+        font-size: 13px;
+    }
+
+    .home-bio-summary {
+        font-size: 11.5px;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        font-size: 10px;
+    }
+
+    .skills-orbital-constellation {
+        grid-template-columns: 1fr;
+        max-height: 48vh;
+    }
+
+    .achievement-orbital-milestone {
+        flex-direction: column;
+        padding: 18px;
+        text-align: center;
+    }
+
+    .milestone-icon-hub {
+        width: 52px;
+        height: 52px;
+    }
+
+    .milestone-headline {
+        font-size: 18px;
+    }
+
+    .contact-statement {
+        font-size: 20px;
+    }
+
+    .cursor-tracker {
+        display: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .nav-clock-rotor,
+    .content-clock-rotor,
+    .device-bezel {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--neon-green);
+    outline-offset: 2px;
+}
