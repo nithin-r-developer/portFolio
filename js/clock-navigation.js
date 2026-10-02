@@ -18,14 +18,17 @@
 
     let activeIndex = 0;
     let currentClockAngle = 0; // Cumulative angle in degrees
-    let isTransitioning = false;
-    let queuedTarget = null; // Max 1 queued section change
+    let isSectionTransitioning = false;
+    let lastNavigationTime = 0;
+    let queuedTarget = null; // Max 1 queued section change (for rotary snap / explicit click)
     const TRANSITION_DURATION = 850;
+    const NAVIGATION_COOLDOWN = 250; // ms cooldown lock after transition completes
 
     // Buffer tolerance for boundary detection
-    const EDGE_THRESHOLD = 5;
-    // Threshold for intentional vertical section change swipe
-    const SWIPE_THRESHOLD = 50;
+    const EDGE_THRESHOLD = 4;
+    // Thresholds for intentional section changes
+    const SWIPE_NAV_THRESHOLD = 45; // px for intentional mobile boundary swipe
+    const WHEEL_NAV_THRESHOLD = 50; // delta for intentional desktop wheel gesture
 
     let navRotorEl;
     let contentRotorEl;
@@ -214,20 +217,37 @@
         });
     }
 
+    function getActivePanel() {
+        return contentPanels[activeIndex] || document.querySelector('.content-section-panel.active');
+    }
+
+    function checkPanelBoundary(panel) {
+        if (!panel) return { atTop: true, atBottom: true, isScrollable: false, st: 0, ch: 0, sh: 0 };
+        const st = panel.scrollTop;
+        const ch = panel.clientHeight;
+        const sh = panel.scrollHeight;
+        const isScrollable = (sh > ch + EDGE_THRESHOLD);
+        const atTop = st <= EDGE_THRESHOLD;
+        const atBottom = isScrollable ? (st + ch >= sh - EDGE_THRESHOLD) : true;
+        return { atTop, atBottom, isScrollable, st, ch, sh };
+    }
+
     // Primary synchronized navigation function
     function goToSection(targetIndex, startAtBottom = false, explicitAngle = null) {
         if (targetIndex < 0 || targetIndex >= TOTAL_SECTIONS) return;
 
         // If target is already active and no transition is running and not explicit snap
-        if (targetIndex === activeIndex && !isTransitioning && explicitAngle === null) return;
+        if (targetIndex === activeIndex && !isSectionTransitioning && explicitAngle === null) return;
 
-        // Rapid swipes queueing: queue max ONE additional section change
-        if (isTransitioning) {
-            queuedTarget = { index: targetIndex, startAtBottom: startAtBottom, explicitAngle: explicitAngle };
+        // Rapid input protection: if already transitioning, at most one target can be queued (for explicit rotary snap / click)
+        if (isSectionTransitioning) {
+            if (explicitAngle !== null) {
+                queuedTarget = { index: targetIndex, startAtBottom: startAtBottom, explicitAngle: explicitAngle };
+            }
             return;
         }
 
-        isTransitioning = true;
+        isSectionTransitioning = true;
         const prevIndex = activeIndex;
         const diff = calculateShortestLogicalDelta(prevIndex, targetIndex);
         const isForward = diff >= 0;
@@ -298,8 +318,10 @@
         const nextPanel = contentPanels[activeIndex];
 
         if (!prevPanel || prevPanel === nextPanel) {
+            contentPanels.forEach((p, idx) => {
+                p.classList.toggle('active', idx === activeIndex);
+            });
             if (nextPanel) {
-                nextPanel.classList.add('active');
                 if (startAtBottom) {
                     nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
                 } else {
@@ -312,16 +334,13 @@
 
         // Reduced motion handling
         if (prefersReducedMotion) {
-            prevPanel.classList.remove('active');
-            prevPanel.style.display = '';
-            prevPanel.style.transform = '';
-            prevPanel.style.opacity = '';
-            prevPanel.style.pointerEvents = '';
-            nextPanel.classList.add('active');
-            nextPanel.style.display = '';
-            nextPanel.style.transform = '';
-            nextPanel.style.opacity = '';
-            nextPanel.style.pointerEvents = '';
+            contentPanels.forEach((p, idx) => {
+                p.classList.toggle('active', idx === activeIndex);
+                p.style.display = '';
+                p.style.transform = '';
+                p.style.opacity = '';
+                p.style.pointerEvents = '';
+            });
             if (startAtBottom) {
                 nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
             } else {
@@ -336,7 +355,16 @@
     }
 
     function finishTransition() {
-        isTransitioning = false;
+        isSectionTransitioning = false;
+        lastNavigationTime = performance.now();
+
+        // Settle boundary detection for newly active panel
+        const activePanel = getActivePanel();
+        if (activePanel) {
+            const boundary = checkPanelBoundary(activePanel);
+            boundaryReady = !boundary.isScrollable || boundary.atBottom || boundary.atTop;
+        }
+
         if (queuedTarget !== null) {
             const next = queuedTarget;
             queuedTarget = null;
@@ -374,7 +402,7 @@
         if (nextPanel) {
             nextPanel.style.display = isMobile ? 'block' : 'flex';
             nextPanel.style.pointerEvents = 'none';
-            if (startAtBottom && isMobile) {
+            if (startAtBottom) {
                 nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
             } else {
                 nextPanel.scrollTop = 0;
@@ -419,20 +447,27 @@
             } else {
                 activeAnimFrameId = null;
 
-                if (prevPanel && prevPanel !== nextPanel) {
-                    prevPanel.classList.remove('active');
-                    prevPanel.style.display = '';
-                    prevPanel.style.transform = '';
-                    prevPanel.style.opacity = '';
-                    prevPanel.style.pointerEvents = '';
+                // Robust cleanup across all panels
+                contentPanels.forEach((panel, idx) => {
+                    if (idx === activeIndex) {
+                        panel.classList.add('active');
+                        panel.style.display = '';
+                        panel.style.transform = '';
+                        panel.style.opacity = '';
+                        panel.style.pointerEvents = '';
+                    } else {
+                        panel.classList.remove('active');
+                        panel.style.display = '';
+                        panel.style.transform = '';
+                        panel.style.opacity = '';
+                        panel.style.pointerEvents = '';
+                    }
+                });
+
+                if (startAtBottom && nextPanel) {
+                    nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
                 }
-                if (nextPanel) {
-                    nextPanel.classList.add('active');
-                    nextPanel.style.display = '';
-                    nextPanel.style.transform = '';
-                    nextPanel.style.opacity = '';
-                    nextPanel.style.pointerEvents = '';
-                }
+
                 if (typeof onComplete === 'function') {
                     onComplete();
                 }
@@ -443,13 +478,13 @@
     }
 
     function nextSection() {
-        const target = (activeIndex + 1) % TOTAL_SECTIONS;
-        goToSection(target, false);
+        if (activeIndex >= TOTAL_SECTIONS - 1) return;
+        goToSection(activeIndex + 1, false);
     }
 
     function prevSection() {
-        const target = (activeIndex - 1 + TOTAL_SECTIONS) % TOTAL_SECTIONS;
-        goToSection(target, true);
+        if (activeIndex <= 0) return;
+        goToSection(activeIndex - 1, true);
     }
 
     // ========================================================
@@ -468,7 +503,7 @@
     let lastHoveredIndex = 0;
 
     function handleRotaryPointerDown(e) {
-        if (isTransitioning) return;
+        if (isSectionTransitioning) return;
         if (e.button !== undefined && e.button !== 0) return; // Only primary button / touch
 
         const housing = document.getElementById('nav-clock-housing');
@@ -641,56 +676,281 @@
         }
     }
 
-    // Mouse wheel navigation on Desktop / Laptop
+    // ========================================================
+    // DESKTOP MOUSE WHEEL & TRACKPAD NAVIGATION
+    // One physical wheel gesture = exactly one section.
+    // Transition lock + debounce cooldown prevents section skipping.
+    // ========================================================
     let accumulatedWheelDelta = 0;
-    let wheelDebounceTimer = null;
+    let wheelGestureTimer = null;
+    let isWheelLocked = false;
+    let desktopScrollWasActive = false;
+    let desktopScrollActiveTimer = null;
 
     function handleWheel(e) {
-        const activePanel = document.querySelector('.content-section-panel.active');
+        const now = performance.now();
+
+        // 1. Controlled transition lock: Ignore wheel during transition or cooldown
+        if (isSectionTransitioning || (now - lastNavigationTime < NAVIGATION_COOLDOWN)) {
+            e.preventDefault();
+            return;
+        }
+
+        // 2. Trackpad gesture lock: Absorb rapid subsequent events from the same physical swipe/flick
+        if (isWheelLocked) {
+            e.preventDefault();
+            clearTimeout(wheelGestureTimer);
+            wheelGestureTimer = setTimeout(() => {
+                isWheelLocked = false;
+                accumulatedWheelDelta = 0;
+            }, 200);
+            return;
+        }
+
+        const activePanel = getActivePanel();
         if (!activePanel) return;
 
-        const st = activePanel.scrollTop;
-        const ch = activePanel.clientHeight;
-        const sh = activePanel.scrollHeight;
-        const isScrollable = (sh > ch + EDGE_THRESHOLD);
-        const isAtBottom = isScrollable ? (st + ch >= sh - EDGE_THRESHOLD) : true;
-        const isAtTop = isScrollable ? (st <= EDGE_THRESHOLD) : true;
+        const boundary = checkPanelBoundary(activePanel);
 
         if (e.deltaY > 0) {
-            // Scrolling downward through content
-            if (!isAtBottom) {
+            // Scrolling DOWN
+            if (!boundary.atBottom) {
+                // Inner content still scrollable below: let native scroll handle it
                 accumulatedWheelDelta = 0;
+                desktopScrollWasActive = true;
+                clearTimeout(desktopScrollActiveTimer);
+                desktopScrollActiveTimer = setTimeout(() => {
+                    desktopScrollWasActive = false;
+                }, 200);
                 return;
             }
+
+            // At bottom boundary:
+            // If the user just reached bottom during continuous scrolling, do NOT advance in same gesture
+            if (desktopScrollWasActive) {
+                e.preventDefault();
+                clearTimeout(desktopScrollActiveTimer);
+                desktopScrollActiveTimer = setTimeout(() => {
+                    desktopScrollWasActive = false;
+                }, 200);
+                return;
+            }
+
+            // Boundary stop: at last section (CONTACT), stop
+            if (activeIndex >= TOTAL_SECTIONS - 1) {
+                return;
+            }
+
             e.preventDefault();
             accumulatedWheelDelta += e.deltaY;
-            clearTimeout(wheelDebounceTimer);
-            wheelDebounceTimer = setTimeout(() => { accumulatedWheelDelta = 0; }, 200);
-
-            if (accumulatedWheelDelta >= 70) {
+            clearTimeout(wheelGestureTimer);
+            wheelGestureTimer = setTimeout(() => {
                 accumulatedWheelDelta = 0;
+            }, 200);
+
+            if (accumulatedWheelDelta >= WHEEL_NAV_THRESHOLD) {
+                accumulatedWheelDelta = 0;
+                isWheelLocked = true;
                 nextSection();
             }
         } else if (e.deltaY < 0) {
-            // Scrolling upward through content
-            if (!isAtTop) {
+            // Scrolling UP
+            if (!boundary.atTop) {
+                // Inner content still scrollable above: let native scroll handle it
                 accumulatedWheelDelta = 0;
+                desktopScrollWasActive = true;
+                clearTimeout(desktopScrollActiveTimer);
+                desktopScrollActiveTimer = setTimeout(() => {
+                    desktopScrollWasActive = false;
+                }, 200);
                 return;
             }
+
+            // At top boundary:
+            if (desktopScrollWasActive) {
+                e.preventDefault();
+                clearTimeout(desktopScrollActiveTimer);
+                desktopScrollActiveTimer = setTimeout(() => {
+                    desktopScrollWasActive = false;
+                }, 200);
+                return;
+            }
+
+            // Boundary stop: at first section (HOME), stop
+            if (activeIndex <= 0) {
+                return;
+            }
+
             e.preventDefault();
             accumulatedWheelDelta += e.deltaY;
-            clearTimeout(wheelDebounceTimer);
-            wheelDebounceTimer = setTimeout(() => { accumulatedWheelDelta = 0; }, 200);
-
-            if (accumulatedWheelDelta <= -70) {
+            clearTimeout(wheelGestureTimer);
+            wheelGestureTimer = setTimeout(() => {
                 accumulatedWheelDelta = 0;
+            }, 200);
+
+            if (accumulatedWheelDelta <= -WHEEL_NAV_THRESHOLD) {
+                accumulatedWheelDelta = 0;
+                isWheelLocked = true;
                 prevSection();
             }
         }
     }
 
+    // ========================================================
+    // MOBILE NATURAL CONTENT SCROLL & BOUNDARY GESTURES
+    // Native vertical scrolling on content is completely uninhibited.
+    // Intentional swipe only triggers section change at settled boundaries.
+    // ========================================================
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTrackingTouch = false;
+    let touchInitiatedAtBoundary = null; // null | 'bottom' | 'top' | 'both'
+    let boundaryReady = true;
+    let boundarySettleTimer = null;
+    let lastScrollTimestamp = 0;
+
+    function handleContentTouchStart(e) {
+        // Do not intercept if touch is on rotary dial
+        if (e.target.closest('#nav-clock-housing') || e.target.closest('.nav-node-btn')) {
+            isTrackingTouch = false;
+            return;
+        }
+
+        if (isSectionTransitioning || (performance.now() - lastNavigationTime < NAVIGATION_COOLDOWN)) {
+            isTrackingTouch = false;
+            return;
+        }
+
+        if (!e.touches || e.touches.length !== 1) {
+            isTrackingTouch = false;
+            return;
+        }
+
+        const touch = e.touches[0];
+        touchStartY = touch.clientY;
+        touchStartX = touch.clientX;
+        isTrackingTouch = true;
+
+        const activePanel = getActivePanel();
+        const boundary = checkPanelBoundary(activePanel);
+
+        // Momentum protection: if scrolling was active within last 100ms, user is stopping momentum
+        const isMomentumActive = (performance.now() - lastScrollTimestamp < 100);
+
+        if (isMomentumActive) {
+            touchInitiatedAtBoundary = null;
+            boundaryReady = false;
+        } else if (!boundary.isScrollable) {
+            touchInitiatedAtBoundary = 'both';
+            boundaryReady = true;
+        } else if (boundary.atBottom && boundaryReady) {
+            touchInitiatedAtBoundary = 'bottom';
+        } else if (boundary.atTop && boundaryReady) {
+            touchInitiatedAtBoundary = 'top';
+        } else {
+            touchInitiatedAtBoundary = null;
+        }
+    }
+
+    function handleContentTouchMove(e) {
+        if (!isTrackingTouch || isSectionTransitioning) return;
+        if (!e.touches || e.touches.length !== 1) return;
+
+        const touch = e.touches[0];
+        const deltaY = touchStartY - touch.clientY; // positive = dragged up (scroll down)
+        const deltaX = touchStartX - touch.clientX;
+
+        // Ensure movement is primarily vertical
+        if (Math.abs(deltaY) < Math.abs(deltaX) * 0.8) {
+            return;
+        }
+
+        const activePanel = getActivePanel();
+        const boundary = checkPanelBoundary(activePanel);
+
+        if (deltaY > 0) {
+            // Scrolling DOWN
+            if (!boundary.atBottom) {
+                // Native scrolling is running! Do NOT preventDefault! Do NOT switch section!
+                boundaryReady = false;
+                touchInitiatedAtBoundary = null;
+                return;
+            }
+
+            // At bottom boundary:
+            // Only switch section if touch began at settled bottom boundary
+            if ((touchInitiatedAtBoundary === 'bottom' || touchInitiatedAtBoundary === 'both') && deltaY >= SWIPE_NAV_THRESHOLD) {
+                if (activeIndex < TOTAL_SECTIONS - 1) {
+                    isTrackingTouch = false;
+                    touchInitiatedAtBoundary = null;
+                    boundaryReady = false;
+                    nextSection();
+                }
+            }
+        } else if (deltaY < 0) {
+            // Scrolling UP
+            if (!boundary.atTop) {
+                // Native scrolling is running!
+                boundaryReady = false;
+                touchInitiatedAtBoundary = null;
+                return;
+            }
+
+            // At top boundary:
+            if ((touchInitiatedAtBoundary === 'top' || touchInitiatedAtBoundary === 'both') && Math.abs(deltaY) >= SWIPE_NAV_THRESHOLD) {
+                if (activeIndex > 0) {
+                    isTrackingTouch = false;
+                    touchInitiatedAtBoundary = null;
+                    boundaryReady = false;
+                    prevSection();
+                }
+            }
+        }
+    }
+
+    function handleContentTouchEnd() {
+        isTrackingTouch = false;
+        touchInitiatedAtBoundary = null;
+
+        const activePanel = getActivePanel();
+        if (!activePanel) return;
+
+        clearTimeout(boundarySettleTimer);
+        boundarySettleTimer = setTimeout(() => {
+            const boundary = checkPanelBoundary(activePanel);
+            const momentumSettled = (performance.now() - lastScrollTimestamp >= 120);
+
+            if (momentumSettled) {
+                if (!boundary.isScrollable || boundary.atBottom || boundary.atTop) {
+                    boundaryReady = true;
+                } else {
+                    boundaryReady = false;
+                }
+            }
+        }, 150);
+    }
+
+    function handlePanelScroll() {
+        lastScrollTimestamp = performance.now();
+        const activePanel = getActivePanel();
+        const boundary = checkPanelBoundary(activePanel);
+
+        if (!boundary.atBottom && !boundary.atTop) {
+            boundaryReady = false;
+        } else {
+            clearTimeout(boundarySettleTimer);
+            boundarySettleTimer = setTimeout(() => {
+                const b = checkPanelBoundary(activePanel);
+                if (b.atBottom || b.atTop || !b.isScrollable) {
+                    boundaryReady = true;
+                }
+            }, 150);
+        }
+    }
+
     function handleKeyDown(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+        if (isSectionTransitioning || (performance.now() - lastNavigationTime < NAVIGATION_COOLDOWN)) return;
 
         switch (e.key) {
             case 'ArrowDown':
@@ -745,6 +1005,17 @@
         window.addEventListener('pointerup', handleRotaryPointerUp);
         window.addEventListener('pointercancel', handleRotaryPointerUp);
 
+        // Mobile touch scrolling and boundary navigation (passive: never blocks native scrolling)
+        window.addEventListener('touchstart', handleContentTouchStart, { passive: true });
+        window.addEventListener('touchmove', handleContentTouchMove, { passive: true });
+        window.addEventListener('touchend', handleContentTouchEnd, { passive: true });
+        window.addEventListener('touchcancel', handleContentTouchEnd, { passive: true });
+
+        // Scroll listeners on each panel to monitor momentum & boundaries
+        contentPanels.forEach(panel => {
+            panel.addEventListener('scroll', handlePanelScroll, { passive: true });
+        });
+
         // Update guidance indicator
         const guidanceTextEl = document.querySelector('.guidance-text');
         if (guidanceTextEl) {
@@ -790,7 +1061,9 @@
         nextSection,
         prevSection,
         getActiveIndex: () => activeIndex,
-        getSections: () => SECTIONS
+        getSections: () => SECTIONS,
+        isTransitioning: () => isSectionTransitioning,
+        isSectionTransitioning: () => isSectionTransitioning
     };
 
     if (document.readyState === 'loading') {

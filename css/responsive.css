@@ -392,10 +392,12 @@
         overscroll-behavior-y: contain;
         scrollbar-width: thin;
         scrollbar-color: var(--neon-green-border) transparent;
+        touch-action: pan-y;
     }
 
     .content-section-panel.active {
         display: block; /* Content expands naturally and remains naturally scrollable */
+        touch-action: pan-y;
     }
 
     /* Content Area: Widened, begins immediately below top-center navigation, small bottom space */
