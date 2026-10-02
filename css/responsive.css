@@ -398,6 +398,7 @@
     .content-section-panel.active {
         display: block; /* Content expands naturally and remains naturally scrollable */
         touch-action: pan-y;
+        pointer-events: auto;
     }
 
     /* Content Area: Widened, begins immediately below top-center navigation, small bottom space */

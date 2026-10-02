@@ -19,15 +19,18 @@
     let activeIndex = 0;
     let currentClockAngle = 0; // Cumulative angle in degrees
     let isSectionTransitioning = false;
+    let isInitialized = false;
     let lastNavigationTime = 0;
     let queuedTarget = null; // Max 1 queued section change (for rotary snap / explicit click)
     const TRANSITION_DURATION = 850;
     const NAVIGATION_COOLDOWN = 250; // ms cooldown lock after transition completes
 
-    // Buffer tolerance for boundary detection
-    const EDGE_THRESHOLD = 4;
-    // Thresholds for intentional section changes
-    const SWIPE_NAV_THRESHOLD = 45; // px for intentional mobile boundary swipe
+    // Boundary detection tolerance (handles mobile fractional pixels, dynamic viewports, padding)
+    const BOUNDARY_TOLERANCE = 24;
+    // Movement distance thresholds for mobile boundary swipe navigation
+    const MOBILE_MOVE_NAV_THRESHOLD = 40;
+    const MOBILE_END_NAV_THRESHOLD = 35;
+    const MOBILE_FLICK_NAV_THRESHOLD = 28;
     const WHEEL_NAV_THRESHOLD = 50; // delta for intentional desktop wheel gesture
 
     let navRotorEl;
@@ -221,23 +224,28 @@
         return contentPanels[activeIndex] || document.querySelector('.content-section-panel.active');
     }
 
-    function checkPanelBoundary(panel) {
-        if (!panel) return { atTop: true, atBottom: true, isScrollable: false, st: 0, ch: 0, sh: 0 };
-        const st = panel.scrollTop;
-        const ch = panel.clientHeight;
-        const sh = panel.scrollHeight;
-        const isScrollable = (sh > ch + EDGE_THRESHOLD);
-        const atTop = st <= EDGE_THRESHOLD;
-        const atBottom = isScrollable ? (st + ch >= sh - EDGE_THRESHOLD) : true;
-        return { atTop, atBottom, isScrollable, st, ch, sh };
+    function isPanelAtBottom(panel) {
+        if (!panel) return true;
+        const remaining = panel.scrollHeight - (panel.scrollTop + panel.clientHeight);
+        return remaining <= BOUNDARY_TOLERANCE;
+    }
+
+    function isPanelAtTop(panel) {
+        if (!panel) return true;
+        return panel.scrollTop <= BOUNDARY_TOLERANCE;
+    }
+
+    function isPanelScrollable(panel) {
+        if (!panel) return false;
+        return panel.scrollHeight > (panel.clientHeight + BOUNDARY_TOLERANCE);
     }
 
     // Primary synchronized navigation function
     function goToSection(targetIndex, startAtBottom = false, explicitAngle = null) {
         if (targetIndex < 0 || targetIndex >= TOTAL_SECTIONS) return;
 
-        // If target is already active and no transition is running and not explicit snap
-        if (targetIndex === activeIndex && !isSectionTransitioning && explicitAngle === null) return;
+        // If target is already active and system is initialized and no transition is running and not explicit snap
+        if (isInitialized && targetIndex === activeIndex && !isSectionTransitioning && explicitAngle === null) return;
 
         // Rapid input protection: if already transitioning, at most one target can be queued (for explicit rotary snap / click)
         if (isSectionTransitioning) {
@@ -357,13 +365,7 @@
     function finishTransition() {
         isSectionTransitioning = false;
         lastNavigationTime = performance.now();
-
-        // Settle boundary detection for newly active panel
-        const activePanel = getActivePanel();
-        if (activePanel) {
-            const boundary = checkPanelBoundary(activePanel);
-            boundaryReady = !boundary.isScrollable || boundary.atBottom || boundary.atTop;
-        }
+        isInitialized = true;
 
         if (queuedTarget !== null) {
             const next = queuedTarget;
@@ -710,11 +712,13 @@
         const activePanel = getActivePanel();
         if (!activePanel) return;
 
-        const boundary = checkPanelBoundary(activePanel);
+        const scrollable = isPanelScrollable(activePanel);
+        const atBottom = isPanelAtBottom(activePanel);
+        const atTop = isPanelAtTop(activePanel);
 
         if (e.deltaY > 0) {
             // Scrolling DOWN
-            if (!boundary.atBottom) {
+            if (scrollable && !atBottom) {
                 // Inner content still scrollable below: let native scroll handle it
                 accumulatedWheelDelta = 0;
                 desktopScrollWasActive = true;
@@ -755,7 +759,7 @@
             }
         } else if (e.deltaY < 0) {
             // Scrolling UP
-            if (!boundary.atTop) {
+            if (scrollable && !atTop) {
                 // Inner content still scrollable above: let native scroll handle it
                 accumulatedWheelDelta = 0;
                 desktopScrollWasActive = true;
@@ -803,10 +807,11 @@
     // ========================================================
     let touchStartY = 0;
     let touchStartX = 0;
+    let touchStartTime = 0;
     let isTrackingTouch = false;
-    let touchInitiatedAtBoundary = null; // null | 'bottom' | 'top' | 'both'
-    let boundaryReady = true;
-    let boundarySettleTimer = null;
+    let touchStartedAtBottom = false;
+    let touchStartedAtTop = false;
+    let touchNavTriggered = false;
     let lastScrollTimestamp = 0;
 
     function handleContentTouchStart(e) {
@@ -829,35 +834,38 @@
         const touch = e.touches[0];
         touchStartY = touch.clientY;
         touchStartX = touch.clientX;
+        touchStartTime = performance.now();
         isTrackingTouch = true;
+        touchNavTriggered = false;
 
         const activePanel = getActivePanel();
-        const boundary = checkPanelBoundary(activePanel);
+        const scrollable = isPanelScrollable(activePanel);
+        const atBottom = isPanelAtBottom(activePanel);
+        const atTop = isPanelAtTop(activePanel);
 
-        // Momentum protection: if scrolling was active within last 100ms, user is stopping momentum
-        const isMomentumActive = (performance.now() - lastScrollTimestamp < 100);
+        // Momentum check: if a native scroll happened within the last 80ms,
+        // the user's touch is to stop momentum, not to trigger boundary navigation.
+        const isMomentumActive = (performance.now() - lastScrollTimestamp < 80);
 
         if (isMomentumActive) {
-            touchInitiatedAtBoundary = null;
-            boundaryReady = false;
-        } else if (!boundary.isScrollable) {
-            touchInitiatedAtBoundary = 'both';
-            boundaryReady = true;
-        } else if (boundary.atBottom && boundaryReady) {
-            touchInitiatedAtBoundary = 'bottom';
-        } else if (boundary.atTop && boundaryReady) {
-            touchInitiatedAtBoundary = 'top';
+            touchStartedAtBottom = false;
+            touchStartedAtTop = false;
+        } else if (!scrollable) {
+            // Content fits within viewport; can navigate in either direction
+            touchStartedAtBottom = true;
+            touchStartedAtTop = true;
         } else {
-            touchInitiatedAtBoundary = null;
+            touchStartedAtBottom = atBottom;
+            touchStartedAtTop = atTop;
         }
     }
 
     function handleContentTouchMove(e) {
-        if (!isTrackingTouch || isSectionTransitioning) return;
+        if (!isTrackingTouch || isSectionTransitioning || touchNavTriggered) return;
         if (!e.touches || e.touches.length !== 1) return;
 
         const touch = e.touches[0];
-        const deltaY = touchStartY - touch.clientY; // positive = dragged up (scroll down)
+        const deltaY = touchStartY - touch.clientY; // positive = dragged finger UP (scroll down)
         const deltaX = touchStartX - touch.clientX;
 
         // Ensure movement is primarily vertical
@@ -865,87 +873,61 @@
             return;
         }
 
-        const activePanel = getActivePanel();
-        const boundary = checkPanelBoundary(activePanel);
-
-        if (deltaY > 0) {
-            // Scrolling DOWN
-            if (!boundary.atBottom) {
-                // Native scrolling is running! Do NOT preventDefault! Do NOT switch section!
-                boundaryReady = false;
-                touchInitiatedAtBoundary = null;
-                return;
+        if (deltaY >= MOBILE_MOVE_NAV_THRESHOLD) {
+            // Dragging UP -> Wants to navigate DOWN to next section
+            if (touchStartedAtBottom && activeIndex < TOTAL_SECTIONS - 1) {
+                touchNavTriggered = true;
+                isTrackingTouch = false;
+                nextSection();
             }
-
-            // At bottom boundary:
-            // Only switch section if touch began at settled bottom boundary
-            if ((touchInitiatedAtBoundary === 'bottom' || touchInitiatedAtBoundary === 'both') && deltaY >= SWIPE_NAV_THRESHOLD) {
-                if (activeIndex < TOTAL_SECTIONS - 1) {
-                    isTrackingTouch = false;
-                    touchInitiatedAtBoundary = null;
-                    boundaryReady = false;
-                    nextSection();
-                }
-            }
-        } else if (deltaY < 0) {
-            // Scrolling UP
-            if (!boundary.atTop) {
-                // Native scrolling is running!
-                boundaryReady = false;
-                touchInitiatedAtBoundary = null;
-                return;
-            }
-
-            // At top boundary:
-            if ((touchInitiatedAtBoundary === 'top' || touchInitiatedAtBoundary === 'both') && Math.abs(deltaY) >= SWIPE_NAV_THRESHOLD) {
-                if (activeIndex > 0) {
-                    isTrackingTouch = false;
-                    touchInitiatedAtBoundary = null;
-                    boundaryReady = false;
-                    prevSection();
-                }
+        } else if (deltaY <= -MOBILE_MOVE_NAV_THRESHOLD) {
+            // Dragging DOWN -> Wants to navigate UP to previous section
+            if (touchStartedAtTop && activeIndex > 0) {
+                touchNavTriggered = true;
+                isTrackingTouch = false;
+                prevSection();
             }
         }
     }
 
-    function handleContentTouchEnd() {
+    function handleContentTouchEnd(e) {
+        if (!isTrackingTouch || isSectionTransitioning || touchNavTriggered) {
+            isTrackingTouch = false;
+            return;
+        }
         isTrackingTouch = false;
-        touchInitiatedAtBoundary = null;
 
-        const activePanel = getActivePanel();
-        if (!activePanel) return;
+        const changedTouch = (e.changedTouches && e.changedTouches[0]) ? e.changedTouches[0] : null;
+        if (!changedTouch) return;
 
-        clearTimeout(boundarySettleTimer);
-        boundarySettleTimer = setTimeout(() => {
-            const boundary = checkPanelBoundary(activePanel);
-            const momentumSettled = (performance.now() - lastScrollTimestamp >= 120);
+        const deltaY = touchStartY - changedTouch.clientY;
+        const deltaX = touchStartX - changedTouch.clientX;
+        const duration = performance.now() - touchStartTime;
 
-            if (momentumSettled) {
-                if (!boundary.isScrollable || boundary.atBottom || boundary.atTop) {
-                    boundaryReady = true;
-                } else {
-                    boundaryReady = false;
-                }
+        // Ensure movement is primarily vertical
+        if (Math.abs(deltaY) < Math.abs(deltaX) * 0.8) {
+            return;
+        }
+
+        // Quick flick vs steady swipe
+        const isFlick = duration < 320;
+        const threshold = isFlick ? MOBILE_FLICK_NAV_THRESHOLD : MOBILE_END_NAV_THRESHOLD;
+
+        if (deltaY >= threshold) {
+            if (touchStartedAtBottom && activeIndex < TOTAL_SECTIONS - 1) {
+                touchNavTriggered = true;
+                nextSection();
             }
-        }, 150);
+        } else if (deltaY <= -threshold) {
+            if (touchStartedAtTop && activeIndex > 0) {
+                touchNavTriggered = true;
+                prevSection();
+            }
+        }
     }
 
     function handlePanelScroll() {
         lastScrollTimestamp = performance.now();
-        const activePanel = getActivePanel();
-        const boundary = checkPanelBoundary(activePanel);
-
-        if (!boundary.atBottom && !boundary.atTop) {
-            boundaryReady = false;
-        } else {
-            clearTimeout(boundarySettleTimer);
-            boundarySettleTimer = setTimeout(() => {
-                const b = checkPanelBoundary(activePanel);
-                if (b.atBottom || b.atTop || !b.isScrollable) {
-                    boundaryReady = true;
-                }
-            }, 150);
-        }
     }
 
     function handleKeyDown(e) {
@@ -1054,6 +1036,7 @@
 
         // Initialize active section 0 (HOME)
         goToSection(0, false);
+        isInitialized = true;
     }
 
     window.ClockNav = {
