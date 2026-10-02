@@ -22,8 +22,8 @@
     let isInitialized = false;
     let lastNavigationTime = 0;
     let queuedTarget = null; // Max 1 queued section change (for rotary snap / explicit click)
-    const TRANSITION_DURATION = 850;
-    const NAVIGATION_COOLDOWN = 250; // ms cooldown lock after transition completes
+    const TRANSITION_DURATION = 400;
+    const NAVIGATION_COOLDOWN = 100; // ms cooldown lock after transition completes
 
     // Boundary detection tolerance (handles mobile fractional pixels, dynamic viewports, padding)
     const BOUNDARY_TOLERANCE = 24;
@@ -31,7 +31,8 @@
     const MOBILE_MOVE_NAV_THRESHOLD = 40;
     const MOBILE_END_NAV_THRESHOLD = 35;
     const MOBILE_FLICK_NAV_THRESHOLD = 28;
-    const WHEEL_NAV_THRESHOLD = 50; // delta for intentional desktop wheel gesture
+    // Desktop mouse-wheel half-scroll threshold (approximately half of a standard mouse-wheel notch/movement)
+    const SCROLL_THRESHOLD = 40;
 
     let navRotorEl;
     let contentRotorEl;
@@ -278,7 +279,7 @@
         }
 
         const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const duration = explicitAngle !== null ? '400ms' : '850ms';
+        const duration = explicitAngle !== null ? '300ms' : '400ms';
         const transitionStyle = prefersReducedMotion ? 'none' : `transform ${duration} cubic-bezier(0.22, 1.0, 0.36, 1.0)`;
 
         // Left clock rotation
@@ -404,7 +405,7 @@
         if (nextPanel) {
             nextPanel.style.display = isMobile ? 'block' : 'flex';
             nextPanel.style.pointerEvents = 'none';
-            if (startAtBottom) {
+            if (isMobile && startAtBottom) {
                 nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
             } else {
                 nextPanel.scrollTop = 0;
@@ -466,8 +467,10 @@
                     }
                 });
 
-                if (startAtBottom && nextPanel) {
+                if (isMobile && startAtBottom && nextPanel) {
                     nextPanel.scrollTop = Math.max(0, nextPanel.scrollHeight - nextPanel.clientHeight);
+                } else if (!isMobile && nextPanel) {
+                    nextPanel.scrollTop = 0;
                 }
 
                 if (typeof onComplete === 'function') {
@@ -680,123 +683,98 @@
 
     // ========================================================
     // DESKTOP MOUSE WHEEL & TRACKPAD NAVIGATION
-    // One physical wheel gesture = exactly one section.
-    // Transition lock + debounce cooldown prevents section skipping.
+    // Half mouse-wheel scroll = exactly one section.
+    // Normalized accumulator + transition lock prevents section skipping.
     // ========================================================
-    let accumulatedWheelDelta = 0;
+    let wheelAccumulator = 0;
     let wheelGestureTimer = null;
+    let wheelDecayTimer = null;
     let isWheelLocked = false;
-    let desktopScrollWasActive = false;
-    let desktopScrollActiveTimer = null;
 
     function handleWheel(e) {
         const now = performance.now();
 
-        // 1. Controlled transition lock: Ignore wheel during transition or cooldown
+        // 1. Controlled transition lock: Ignore all wheel input during section transition or cooldown
         if (isSectionTransitioning || (now - lastNavigationTime < NAVIGATION_COOLDOWN)) {
             e.preventDefault();
+            wheelAccumulator = 0;
             return;
         }
 
-        // 2. Trackpad gesture lock: Absorb rapid subsequent events from the same physical swipe/flick
+        // 2. Gesture lock: Absorb subsequent inertia/wheel events from the same physical scroll gesture
         if (isWheelLocked) {
             e.preventDefault();
+            wheelAccumulator = 0;
             clearTimeout(wheelGestureTimer);
             wheelGestureTimer = setTimeout(() => {
                 isWheelLocked = false;
-                accumulatedWheelDelta = 0;
-            }, 200);
+                wheelAccumulator = 0;
+            }, 180);
             return;
         }
 
-        const activePanel = getActivePanel();
-        if (!activePanel) return;
+        // 3. Normalize delta across all wheel delta modes
+        let normalizedDelta = e.deltaY;
+        if (e.deltaMode === 1) {
+            // Line mode (e.g. Firefox default: 1 line ~ 36px; full notch = 3 lines ~ 108px)
+            normalizedDelta *= 36;
+        } else if (e.deltaMode === 2) {
+            // Page mode
+            normalizedDelta *= 400;
+        }
 
-        const scrollable = isPanelScrollable(activePanel);
-        const atBottom = isPanelAtBottom(activePanel);
-        const atTop = isPanelAtTop(activePanel);
+        // Prevent browser native scrolling or bounce
+        e.preventDefault();
 
-        if (e.deltaY > 0) {
-            // Scrolling DOWN
-            if (scrollable && !atBottom) {
-                // Inner content still scrollable below: let native scroll handle it
-                accumulatedWheelDelta = 0;
-                desktopScrollWasActive = true;
-                clearTimeout(desktopScrollActiveTimer);
-                desktopScrollActiveTimer = setTimeout(() => {
-                    desktopScrollWasActive = false;
-                }, 200);
-                return;
-            }
+        // Reset accumulation if direction reverses
+        if ((wheelAccumulator > 0 && normalizedDelta < 0) || (wheelAccumulator < 0 && normalizedDelta > 0)) {
+            wheelAccumulator = 0;
+        }
 
-            // At bottom boundary:
-            // If the user just reached bottom during continuous scrolling, do NOT advance in same gesture
-            if (desktopScrollWasActive) {
-                e.preventDefault();
-                clearTimeout(desktopScrollActiveTimer);
-                desktopScrollActiveTimer = setTimeout(() => {
-                    desktopScrollWasActive = false;
-                }, 200);
-                return;
-            }
+        // Accumulate normalized wheel delta
+        wheelAccumulator += normalizedDelta;
 
-            // Boundary stop: at last section (CONTACT), stop
+        // Auto-decay accumulator after 200ms of inactivity (so accidental micro-movements discard)
+        clearTimeout(wheelDecayTimer);
+        wheelDecayTimer = setTimeout(() => {
+            wheelAccumulator = 0;
+        }, 200);
+
+        // 4. Half-scroll threshold evaluation: exactly ONE threshold crossing = ONE section
+        if (wheelAccumulator >= SCROLL_THRESHOLD) {
+            // Downward half-scroll reached
+            wheelAccumulator = 0;
+            clearTimeout(wheelDecayTimer);
+
             if (activeIndex >= TOTAL_SECTIONS - 1) {
-                return;
+                return; // Boundary stop: at last section (CONTACT), stop
             }
 
-            e.preventDefault();
-            accumulatedWheelDelta += e.deltaY;
+            isWheelLocked = true;
             clearTimeout(wheelGestureTimer);
             wheelGestureTimer = setTimeout(() => {
-                accumulatedWheelDelta = 0;
-            }, 200);
+                isWheelLocked = false;
+                wheelAccumulator = 0;
+            }, 180);
 
-            if (accumulatedWheelDelta >= WHEEL_NAV_THRESHOLD) {
-                accumulatedWheelDelta = 0;
-                isWheelLocked = true;
-                nextSection();
-            }
-        } else if (e.deltaY < 0) {
-            // Scrolling UP
-            if (scrollable && !atTop) {
-                // Inner content still scrollable above: let native scroll handle it
-                accumulatedWheelDelta = 0;
-                desktopScrollWasActive = true;
-                clearTimeout(desktopScrollActiveTimer);
-                desktopScrollActiveTimer = setTimeout(() => {
-                    desktopScrollWasActive = false;
-                }, 200);
-                return;
-            }
+            nextSection();
+        } else if (wheelAccumulator <= -SCROLL_THRESHOLD) {
+            // Upward half-scroll reached
+            wheelAccumulator = 0;
+            clearTimeout(wheelDecayTimer);
 
-            // At top boundary:
-            if (desktopScrollWasActive) {
-                e.preventDefault();
-                clearTimeout(desktopScrollActiveTimer);
-                desktopScrollActiveTimer = setTimeout(() => {
-                    desktopScrollWasActive = false;
-                }, 200);
-                return;
-            }
-
-            // Boundary stop: at first section (HOME), stop
             if (activeIndex <= 0) {
-                return;
+                return; // Boundary stop: at first section (HOME), stop
             }
 
-            e.preventDefault();
-            accumulatedWheelDelta += e.deltaY;
+            isWheelLocked = true;
             clearTimeout(wheelGestureTimer);
             wheelGestureTimer = setTimeout(() => {
-                accumulatedWheelDelta = 0;
-            }, 200);
+                isWheelLocked = false;
+                wheelAccumulator = 0;
+            }, 180);
 
-            if (accumulatedWheelDelta <= -WHEEL_NAV_THRESHOLD) {
-                accumulatedWheelDelta = 0;
-                isWheelLocked = true;
-                prevSection();
-            }
+            prevSection();
         }
     }
 
